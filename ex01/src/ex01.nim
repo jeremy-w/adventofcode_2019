@@ -1,3 +1,7 @@
+# Run with:
+#   nimble run ex01 ./input.txt
+#   nimble run ex01 -d:2 ./input.txt
+# Completes basically instantly. Yay nim.
 import math
 import parseopt
 import sequtils
@@ -6,25 +10,17 @@ import sugar
 import system/io
 
 func fuelForMass(mass: Natural): int =
-  debugEcho "\tmass: ", mass
   var fraction = trunc(mass / 3)
-  debugEcho "\tfrac: ", fraction
   result = fraction.int - 2
-  debugEcho "\tresult: ", result
 
 func includingFuelMass(mass: Natural): Natural =
   result = 0
   # When I failed to cast, m was a Natural, and then assignment failed a range check when fuelForMass returned -2.
-  # All this logging was towards understanding that.
   var m = mass.int
-  debugEcho "initially: ", m
   while m > 0:
     m = fuelForMass(m)
-    debugEcho "thence: ", m
     if m > 0:
       result += m
-      debugEcho "totaling: ", result
-  debugEcho "lastly totaling: ", result
 
 func test =
   const masses = [12, 14, 1969, 100756]
