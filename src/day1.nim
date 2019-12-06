@@ -1,6 +1,6 @@
 # Run with:
-#   nimble run ex01 ./input.txt
-#   nimble run ex01 -d:2 ./input.txt
+#   nimble run day1 input/day1.txt
+#   nimble run day1 -d:2 input/day1.txt
 # Completes basically instantly. Yay nim.
 import math
 import parseopt
@@ -34,7 +34,7 @@ proc main =
   # Yeah, OK, this param name makes no sense. Not gonna fix it.
   var day = 1
 
-  # BUG: nimble run ex01 --help intercepts --help rather than passing, in spite of docs.
+  # BUG: nimble run day1 --help intercepts --help rather than passing, in spite of docs.
   # (Also -- is just treated as an empty longopt.)
   var p = initOptParser()
   for kind, key, val in p.getopt():
@@ -48,7 +48,7 @@ proc main =
       echo "invalid arg:", repr((kind: kind, key: key, val: val))
 
   if filename == "":
-    stderr.writeLine("usage: ex01 -d:PART INPUTPATH")
+    stderr.writeLine("usage: day1 -d:PART INPUTPATH")
     quit(QuitFailure)
 
   var massFn = if day == 1: fuelForMass else: includingFuelMass
