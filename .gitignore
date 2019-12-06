@@ -1,0 +1,12 @@
+
+# Created by https://www.gitignore.io/api/nim
+# Edit at https://www.gitignore.io/?templates=nim
+
+
+## Binaries compiled by nimble run
+ex??/ex??
+
+### Nim ###
+nimcache/
+
+# End of https://www.gitignore.io/api/nim
