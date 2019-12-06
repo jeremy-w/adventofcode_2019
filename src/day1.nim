@@ -22,13 +22,6 @@ func includingFuelMass(mass: Natural): Natural =
     if m > 0:
       result += m
 
-func test =
-  const masses = [12, 14, 1969, 100756]
-  const expected = [2, 2, 654, 33583]
-  for (mass, shouldBe) in masses.zip(expected):
-    var fuel = fuelForMass(mass)
-    doAssert(fuel == shouldBe)
-
 proc main =
   var filename: string
   # Yeah, OK, this param name makes no sense. Not gonna fix it.
@@ -57,7 +50,16 @@ proc main =
   var fuelNeeded = sum(masses.map(massFn))
   echo(fuelNeeded)
 
+# To test, run with: nimble -d:test day1 input/day1.txt
+when defined(test):
+  const masses = [12, 14, 1969, 100756]
+  const expected = [2, 2, 654, 33583]
+  var i = 0
+  for (mass, shouldBe) in masses.zip(expected):
+    var fuel = fuelForMass mass
+    doAssert fuel == shouldBe
+    i += 1
+  echo i, " tests passed"
 
-when isMainModule:
-  test()
+when isMainModule and not defined(test):
   main()
