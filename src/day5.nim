@@ -2,23 +2,6 @@ import intcode_machine
 import sequtils
 import strformat
 
-type
-    FixedInputWorld* = ref object of World
-        inputs*: seq[int]
-        outputs*: seq[int]
-        shouldEcho: bool
-
-method onInput*(w: FixedInputWorld): int =
-    if w.inputs.len > 1:
-        w.inputs.pop
-    else:
-        w.inputs[0]
-
-method onOutput*(w: FixedInputWorld, i: int, ip: int, mem: seq[int]) =
-    w.outputs.add(i)
-    if w.shouldEcho:
-        procCall onOutput(w.World, i, ip, mem)
-
 let diagnosticProgram = readFile("./input/day5.txt").toProgram
 
 echo "part 1:"

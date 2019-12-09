@@ -103,9 +103,68 @@ proc toString*(mem: seq[int]): string =
 proc runString*(text: string): string =
   run(text.toProgram).toString()
 
+type
+  FixedInputWorld* = ref object of World
+    inputs*: seq[int]
+    outputs*: seq[int]
+    shouldEcho: bool
+
+method onInput*(w: FixedInputWorld): int =
+  if w.inputs.len > 1:
+    w.inputs.pop
+  else:
+    w.inputs[0]
+
+method onOutput*(w: FixedInputWorld, i: int, ip: int, mem: seq[int]) =
+  w.outputs.add(i)
+  if w.shouldEcho:
+    procCall onOutput(w.World, i, ip, mem)
+
 when defined(test):
   echo "# testing: intcode_machine"
   let got = 1002.toInstruction
   doAssert got == (op: 2.Opcode, params: @[0.ParamMode, 1.ParamMode,
       0.ParamMode]), fmt"got: {got}"
   echo "ok - toInstruction"
+
+  echo "# day5 part2"
+  var d5p2Tests = @[
+    (name: "eq?pos true", prog: "3,9,8,9,10,9,4,9,99,-1,8".toProgram, inputs: @[
+        8], expected: @[1]),
+    (name: "eq?pos false", prog: "3,9,8,9,10,9,4,9,99,-1,8".toProgram,
+        inputs: @[-1], expected: @[1]),
+    (name: "lt?pos false", prog: "3,9,7,9,10,9,4,9,99,-1,8".toProgram,
+        inputs: @[8], expected: @[0]),
+    (name: "lt?pos true", prog: "3,9,7,9,10,9,4,9,99,-1,8".toProgram, inputs: @[
+        7], expected: @[1]),
+    (name: "eq?imm true", prog: "3,3,1108,-1,8,3,4,3,99".toProgram, inputs: @[
+        8], expected: @[1]),
+    (name: "eq?imm true", prog: "3,3,1108,-1,8,3,4,3,99".toProgram, inputs: @[
+        -8], expected: @[0]),
+    (name: "lt?imm false", prog: "3,3,1107,-1,8,3,4,3,99".toProgram,
+          inputs: @[8],
+      expected: @[0]),
+    (name: "lt?imm true", prog: "3,3,1107,-1,8,3,4,3,99".toProgram, inputs: @[7],
+      expected: @[0]),
+    (name: "jmp - isNonZero true - pos",
+        prog: "3,12,6,12,15,1,13,14,13,4,13,99,-1,0,1,9".toProgram, inputs: @[1],
+    expected: @[1]),
+    (name: "jmp - isNonZero false - pos",
+        prog: "3,12,6,12,15,1,13,14,13,4,13,99,-1,0,1,9".toProgram, inputs: @[0],
+      expected: @[0]),
+      (name: "jmp - isNonZero true - imm",
+        prog: "3,3,1105,-1,9,1101,0,0,12,4,12,99,1".toProgram, inputs: @[1],
+      expected: @[1]),
+      (name: "jmp - isNonZero false - imm",
+        prog: "3,3,1105,-1,9,1101,0,0,12,4,12,99,1".toProgram, inputs: @[0],
+      expected: @[0]),
+    ]
+  for test in d5p2Tests:
+    let w = FixedInputWorld(inputs: test.inputs)
+    discard run(test.prog, w)
+    try:
+      doAssert w.outputs == test.expected, &"got: {w.outputs}, expected: {test.expected} - {test.name}"
+      echo "ok - ", test.name
+    except:
+      echo "# ", getCurrentExceptionMsg()
+      echo "not ok - ", test.name
