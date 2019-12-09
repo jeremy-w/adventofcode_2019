@@ -66,7 +66,7 @@ proc shortestWireLengths(wire1: WireProgram, wire2: WireProgram):
   result = (path1.toHashSet * path2.toHashSet)
     .toSeq
     .map(proc(it: Point): Part2Result =
-      (p: it, w1: path1.find(it), w2: path2.find(it)))
+      (p: it, w1: path1.find(it) + 1, w2: path2.find(it) + 1))
     .sortedByIt(it.w1 + it.w2)
 
 when defined(test):
@@ -79,6 +79,11 @@ when defined(test):
   (6, 5)])
   let simpleIntersections = wireIntersections(simple1, simple2)
   doAssert simpleIntersections == simpleExpectedIntersections, fmt"got {simpleIntersections}, expected {simpleExpectedIntersections} for {simple1} & {simple2}"
+
+  let simpleShortest = shortestWireLengths(simple1.toWireProgram,
+      simple2.toWireProgram)[
+    0]
+  doAssert simpleShortest == (p: (6, 5), w1: 15, w2: 15), fmt"got: {simpleShortest}"
   echo "tests passed"
   quit(QuitSuccess)
 
