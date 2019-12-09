@@ -26,9 +26,6 @@ type
 proc len(p: Point): int =
   p.x.abs + p.y.abs
 
-proc abs(p: Point): Point =
-  (x: abs(p.x), y: abs(p.y))
-
 proc toWireProgram(line: string): WireProgram =
   line.split(',').mapIt((op: it[0].WireOp, d: parseInt(it[1..^1])))
 
@@ -55,15 +52,15 @@ proc wireIntersections(wire1: WireProgram, wire2: WireProgram): HashSet[Point] =
   let path2 = pointsIn(wire2).toHashSet
   result = (path1 * path2)
 
-proc wireIntersections(wire1: string, wire2: string): HashSet[Point] =
-  wireIntersections(wire1.toWireProgram, wire2.toWireProgram)
-
 proc closestToCore(points: seq[Point]): tuple[p: Point, md: int] =
   let least = points.sortedByIt(it.len)[0]
   let md = least.len
   result = (p: least, md: md)
 
 when defined(test):
+  proc wireIntersections(wire1: string, wire2: string): HashSet[Point] =
+    wireIntersections(wire1.toWireProgram, wire2.toWireProgram)
+
   const simple1 = "R8,U5,L5,D3"
   const simple2 = "U7,R6,D4,L4"
   let simpleExpectedIntersections = toHashSet([(3, 3),
