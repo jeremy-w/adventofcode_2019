@@ -1,4 +1,5 @@
 {
     "editor.formatOnSave": true,
-    "editor.defaultFormatter": "kosz78.nim"
+    "editor.defaultFormatter": "kosz78.nim",
+    "editor.tabSize": 2
 }

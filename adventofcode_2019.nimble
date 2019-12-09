@@ -5,7 +5,7 @@ author = "Jeremy W. Sherman"
 description = "Advent of Code 2019"
 license = "BlueOak-1.0.0"
 srcDir = "src"
-bin = @["day1"]
+bin = @["day1", "day2"]
 
 
 
