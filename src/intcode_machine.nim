@@ -27,7 +27,7 @@ method onInput*(w: World): int {.base.} =
   stdin.readLine().parseInt
 
 method onOutput*(w: World, i: int, ip: int, mem: seq[int]) {.base.} =
-  echo &"output: {i}\n\tip: {ip}\n\tmem: {mem}\n"
+  echo &"output: {i}\n\tip: {ip}\n" #\tmem: {mem}\n"
 
 func paramCount(op: Opcode): Natural =
   case op
@@ -72,6 +72,8 @@ proc run*(program: seq[int], world = World()): seq[int] =
       paramValues.add(param)
     assert paramValues.len == rawParams.len
 
+    echo fmt"running: {instruction}: {rawParams} => {paramValues}"
+
     case instruction.op
     of opAdd:
       assert rawParams.len == 3, fmt"got: {rawParams}"
@@ -79,7 +81,7 @@ proc run*(program: seq[int], world = World()): seq[int] =
       mem[rawParams[2]] = paramValues[0] + paramValues[1]
 
     of opMultiply:
-      mem[rawParams[2]] = paramValues[0] + paramValues[1]
+      mem[rawParams[2]] = paramValues[0] * paramValues[1]
 
     of opInput:
       mem[rawParams[0]] = world.onInput()
@@ -104,5 +106,6 @@ proc runString*(text: string): string =
 when defined(test):
   echo "# testing: intcode_machine"
   let got = 1002.toInstruction
-  doAssert got == (op: 2.Opcode, params: @[0.ParamMode, 1.ParamMode]), fmt"got: {got}"
+  doAssert got == (op: 2.Opcode, params: @[0.ParamMode, 1.ParamMode,
+      0.ParamMode]), fmt"got: {got}"
   echo "ok - toInstruction"

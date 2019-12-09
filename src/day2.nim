@@ -11,10 +11,16 @@ when defined(test):
     ("2,4,4,5,99,0", "2,4,4,5,99,9801"),
     ("1,1,1,4,99,5,6,0,99", "30,1,1,4,2,5,6,0,99"),
     ]
-    for (input, expectedOutput) in tests:
+    echo "# testing: day2"
+    echo "1..", tests.len
+    for i, (input, expectedOutput) in tests:
         let output = runString(input)
-        doAssert output == expectedOutput, fmt"got {output} but expected {expectedOutput} for {input}"
-    echo tests.len, " tests passed"
+        try:
+            doAssert output == expectedOutput, fmt"got {output} but expected {expectedOutput} for {input}"
+            echo "ok - ", i
+        except:
+            echo "# ", getCurrentExceptionMsg()
+            echo "not ok - ", i
     quit(QuitSuccess)
 
 proc gravityAssist(program: seq[int], noun: int, verb: int): seq[int] =
