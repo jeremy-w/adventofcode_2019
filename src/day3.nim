@@ -55,19 +55,28 @@ proc wireIntersections(wire1: WireProgram, wire2: WireProgram): HashSet[Point] =
   let path2 = pointsIn(wire2).toHashSet
   result = (path1 * path2)
 
+proc wireIntersections(wire1: string, wire2: string): HashSet[Point] =
+  wireIntersections(wire1.toWireProgram, wire2.toWireProgram)
+
 proc closestToCore(points: seq[Point]): tuple[p: Point, md: int] =
-  let least = points.sortedByIt(it.abs)[0]
+  let least = points.sortedByIt(it.len)[0]
   let md = least.len
   result = (p: least, md: md)
 
 when defined(test):
-  doAssert("R8,U5,L5,D3")
+  const simple1 = "R8,U5,L5,D3"
+  const simple2 = "U7,R6,D4,L4"
+  let simpleExpectedIntersections = toHashSet([(3, 3),
+  (6, 5)])
+  let simpleIntersections = wireIntersections(simple1, simple2)
+  doAssert simpleIntersections == simpleExpectedIntersections, fmt"got {simpleIntersections}, expected {simpleExpectedIntersections} for {simple1} & {simple2}"
+  echo "tests passed"
+  quit(QuitSuccess)
 
 when isMainModule:
   let input = open("./input/day3.txt")
   let wire1 = input.readLine().toWireProgram
   let wire2 = input.readLine().toWireProgram
-  echo ("wire1:", wire1)
   let intersections = wireIntersections(wire1, wire2).toSeq
   let closest = intersections.closestToCore
-  echo fmt"least: {closest.p}, manhattanDistnace: {closest.md}"
+  echo fmt"least: {closest.p}, manhattanDistance: {closest.md}"
