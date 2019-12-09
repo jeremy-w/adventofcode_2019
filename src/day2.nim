@@ -1,4 +1,5 @@
 import intcode_machine
+import strformat
 
 # Run with: nimble -d:test run day2.nim
 when defined(test):
@@ -28,4 +29,23 @@ proc restore1202ProgramAlarmState(program: seq[int]): seq[int] =
 when isMainModule:
     let program = stdin.readLine().toProgram()
     let readyToRun = restore1202ProgramAlarmState(program)
-    echo run(readyToRun).toString()
+    let mem = run(readyToRun)
+    let output = mem[0]
+    echo "day 2, part 1: the 1202 error has an output of: ", output
+
+    const targetOutput = 19690720
+    var noun = -1
+    var verb = -1
+    block noun_search:
+        while noun <= 99:
+            inc noun
+            verb = -1
+            while verb <= 99:
+                inc verb
+                let output = program.gravityAssist(noun = noun,
+                        verb = verb).run[0]
+                # echo fmt"{noun}, {verb} => {output}"
+                if output == targetOutput:
+                    let answer = 100*noun + verb
+                    echo fmt"day 2, part 2: noun = {noun}; verb = {verb}; 100*noun + verb = {answer}"
+                    break noun_search
