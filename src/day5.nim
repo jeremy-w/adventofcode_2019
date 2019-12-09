@@ -17,3 +17,4 @@ echo "\n=====\n\npart 2:"
 const thermalRadiatorControllerId = 5
 var world2 = FixedInputWorld(inputs: @[thermalRadiatorControllerId])
 discard diagnosticProgram.run(world = world2)
+assert world2.outputs[^1] == 15486302

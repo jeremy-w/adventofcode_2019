@@ -10,6 +10,10 @@ type
     opMultiply = (2, "mul")
     opInput = (3, "inp")
     opOutput = (4, "out")
+    opJumpIfTrue = (5, "bnz")
+    opJumpIfFalse = (6, "brz")
+    opLessThan = (7, "lt?")
+    opEquals = (8, "eq?")
     opHalt = (99, "hlt")
 
   ## Parameter mode, for opcodes that take parameters.
@@ -31,7 +35,8 @@ method onOutput*(w: World, i: int, ip: int, mem: seq[int]) {.base.} =
 
 func paramCount(op: Opcode): Natural =
   case op
-  of opAdd, opMultiply: 3
+  of opAdd, opMultiply, opLessThan, opEquals: 3
+  of opJumpIfTrue, opJumpIfFalse: 2
   of opInput, opOutput: 1
   of opHalt: 0
 
@@ -61,7 +66,9 @@ func toInstruction(i: int): Instruction =
 proc run*(program: seq[int], world = World()): seq[int] =
   var mem = program
   var ip = 0
+  var didJump = false
   while true:
+    didJump = false
     let instruction = mem[ip].toInstruction
     let rawParams = mem[ip+1 ..< ip+1+instruction.op.paramCount]
     var paramValues: seq[int]
@@ -83,6 +90,28 @@ proc run*(program: seq[int], world = World()): seq[int] =
     of opMultiply:
       mem[rawParams[2]] = paramValues[0] * paramValues[1]
 
+    of opLessThan:
+      mem[rawParams[2]] = if paramValues[0] < paramValues[1]: 1 else: 0
+
+    of opEquals:
+      mem[rawParams[2]] = if paramValues[0] == paramValues[1]: 1 else: 0
+
+    of opJumpIfTrue:
+      if paramValues[0] != 0:
+        echo &"  {paramValues[0]} is non-zero: jumping to {paramValues[1]}"
+        ip = paramValues[1]
+        didJump = true
+      else:
+        echo &"  {paramValues[0]} not non-zero: NOT jumping to {paramValues[1]}"
+
+    of opJumpIfFalse:
+      if paramValues[0] == 0:
+        echo &"  {paramValues[0]} is zero: jumping to {paramValues[1]}"
+        ip = paramValues[1]
+        didJump = true
+      else:
+        echo &"  {paramValues[0]} is not zero: NOT jumping to {paramValues[1]}"
+
     of opInput:
       mem[rawParams[0]] = world.onInput()
 
@@ -92,7 +121,8 @@ proc run*(program: seq[int], world = World()): seq[int] =
     of opHalt:
       return mem
 
-    inc ip, 1 + instruction.op.paramCount
+    if not didJump:
+      inc ip, 1 + instruction.op.paramCount
 
 proc toProgram*(line: string): seq[int] =
   line.strip.split(",").map(parseInt)
@@ -132,7 +162,7 @@ when defined(test):
     (name: "eq?pos true", prog: "3,9,8,9,10,9,4,9,99,-1,8".toProgram, inputs: @[
         8], expected: @[1]),
     (name: "eq?pos false", prog: "3,9,8,9,10,9,4,9,99,-1,8".toProgram,
-        inputs: @[-1], expected: @[1]),
+        inputs: @[-1], expected: @[0]),
     (name: "lt?pos false", prog: "3,9,7,9,10,9,4,9,99,-1,8".toProgram,
         inputs: @[8], expected: @[0]),
     (name: "lt?pos true", prog: "3,9,7,9,10,9,4,9,99,-1,8".toProgram, inputs: @[
@@ -145,18 +175,23 @@ when defined(test):
           inputs: @[8],
       expected: @[0]),
     (name: "lt?imm true", prog: "3,3,1107,-1,8,3,4,3,99".toProgram, inputs: @[7],
-      expected: @[0]),
+      expected: @[1]),
     (name: "jmp - isNonZero true - pos",
-        prog: "3,12,6,12,15,1,13,14,13,4,13,99,-1,0,1,9".toProgram, inputs: @[1],
-    expected: @[1]),
-    (name: "jmp - isNonZero false - pos",
-        prog: "3,12,6,12,15,1,13,14,13,4,13,99,-1,0,1,9".toProgram, inputs: @[0],
+        # inp @12
+          # brz @12 @15  # @15: 9
+          # add @13 @14 @13  # 0 + 1 => @13
+          # 9: out @13  # @13: 0 initially
+          # hlt
+      prog: "3,12,6,12,15,1,13,14,13,4,13,99,-1,0,1,9".toProgram, inputs: @[1],
+      expected: @[1]),
+      (name: "jmp - isNonZero false - pos",
+      prog: "3,12,6,12,15,1,13,14,13,4,13,99,-1,0,1,9".toProgram, inputs: @[0],
       expected: @[0]),
       (name: "jmp - isNonZero true - imm",
-        prog: "3,3,1105,-1,9,1101,0,0,12,4,12,99,1".toProgram, inputs: @[1],
+      prog: "3,3,1105,-1,9,1101,0,0,12,4,12,99,1".toProgram, inputs: @[1],
       expected: @[1]),
       (name: "jmp - isNonZero false - imm",
-        prog: "3,3,1105,-1,9,1101,0,0,12,4,12,99,1".toProgram, inputs: @[0],
+      prog: "3,3,1105,-1,9,1101,0,0,12,4,12,99,1".toProgram, inputs: @[0],
       expected: @[0]),
     ]
   for test in d5p2Tests:
