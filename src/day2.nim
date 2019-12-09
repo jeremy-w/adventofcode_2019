@@ -16,11 +16,14 @@ when defined(test):
     echo tests.len, " tests passed"
     quit(QuitSuccess)
 
-proc restore1202ProgramAlarmState(program: seq[int]): seq[int] =
+proc gravityAssist(program: seq[int], noun: int, verb: int): seq[int] =
     var output = program
-    output[1] = 12
-    output[2] = 2
+    output[1] = noun
+    output[2] = verb
     return output
+
+proc restore1202ProgramAlarmState(program: seq[int]): seq[int] =
+    program.gravityAssist(noun = 12, verb = 2)
 
 when isMainModule:
     let program = stdin.readLine().toProgram()
