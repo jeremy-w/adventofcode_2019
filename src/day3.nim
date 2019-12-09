@@ -57,12 +57,16 @@ proc closestToCore(points: seq[Point]): tuple[p: Point, md: int] =
   let md = least.len
   result = (p: least, md: md)
 
+type Part2Result = tuple[p: Point, w1: int, w2: int]
+
 proc shortestWireLengths(wire1: WireProgram, wire2: WireProgram):
-    seq[tuple[p: Point, w1: int, w2: int]] =
+    seq[Part2Result] =
   let path1 = pointsIn(wire1)
   let path2 = pointsIn(wire2)
   result = (path1.toHashSet * path2.toHashSet)
-    .mapIt((p: it, w1: path1.find(it), w2: path2.find(it)))
+    .toSeq
+    .map(proc(it: Point): Part2Result =
+      (p: it, w1: path1.find(it), w2: path2.find(it)))
     .sortedByIt(it.w1 + it.w2)
 
 when defined(test):
