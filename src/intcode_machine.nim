@@ -9,6 +9,39 @@ type
     opMultiply = (2, "*")
     opHalt = (99, ".")
 
+  ## Parameter mode, for opcodes that take parameters.
+  ParamMode* = enum
+    pmPosition = 0  ## The parameter is the address of the value. This is the default.
+    pmImmediate = 1 ## The parameter is the value itself.
+
+  Instruction = tuple
+    op: Opcode
+    params: seq[ParamMode]
+
+func paramCount(op: Opcode): Natural =
+  case op
+  of opAdd, opMultiply: 2
+  of opHalt: 0
+
+## Instructions are encoded as digits from left-to-right mapping to argument modes from last to first, then opcode in last two digits.
+func toInstruction(i: int): Instruction =
+  var digits = i
+
+  # Extract the opcode.
+  result.op = (digits mod 100).Opcode
+  digits = digits div 100
+
+  # Then use that to determine how many params to read.
+  var c = result.op.paramCount
+  while c > 0:
+    dec c
+
+    # This conveniently defaults to 0.
+    let pm = (digits mod 10).ParamMode
+    digits = digits div 10
+
+    result.params.add(pm)
+
 ## Runs an Intcode program.
 ##
 ## An Intcode machine's memory starts at address 0.
@@ -17,10 +50,10 @@ proc run*(program: seq[int]): seq[int] =
   var mem = program
   var ip = 0
   while true:
-    let op = mem[ip].Opcode
+    let instruction = mem[ip].toInstruction
     inc ip
 
-    case op
+    case instruction.op
     of opAdd, opMultiply:
       let leftAddr = mem[ip]
       let left = mem[leftAddr]
@@ -33,7 +66,7 @@ proc run*(program: seq[int]): seq[int] =
       let resAddr = mem[ip]
       inc ip
 
-      let output = if op == opAdd: left + right else: left * right
+      let output = if instruction.op == opAdd: left + right else: left * right
       mem[resAddr] = output
 
     of opHalt:
