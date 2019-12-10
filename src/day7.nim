@@ -15,7 +15,8 @@ proc runAmplifiers(program: Memory, phaseSettings: openArray[int]): int =
   var prevAmpOutput = InitialInputSignal
   while i < AmpCnt:
     echo &"amp {i}: ph={phaseSettings[i]} i={prevAmpOutput}"
-    let w = FixedInputWorld(inputs: @[phaseSettings[i], prevAmpOutput])
+    # INPUTS ARE A STACK
+    let w = FixedInputWorld(inputs: @[phaseSettings[i], prevAmpOutput].reversed)
     run(program, w)
     assert w.outputs.len == 1, &"got {w.outputs.len} outputs, but expected exactly 1"
     prevAmpOutput = w.outputs[0]
@@ -37,14 +38,27 @@ proc findMaxAmplification(program: Memory): tuple[maxOutput: int,
 when defined(test):
   echo "# d7p1 examples"
   let tests = @[
+    # last two positions are phase and input
+      # phase doubles as output
+      # out = phase + 10*input
+        # 4321 from: 10*(10*(10*(10*40 + 30) + 20) + 10) + 0
+        # would expect successive outputs of: 40, 430, 4320, 43210
+        # 0: inp @15 ; PHASE
+        # 2: inp @16 ; INPUT
+        # 4: mul @16 #10 @16 ; 10*INPUT
+        # 8: add @16 @15 @15 ; OUTPUT = PHASE + 10*INPUT
+        # 12: out @15
+        # 14: hlt
+        # 15: .data 0 (PHASE/OUT)
+        # 16: .data 0 (INPUT)
     (p: "3,15,3,16,1002,16,10,16,1,16,15,15,4,15,99,0,0", r: (maxOutput: 43210,
         maxSettings: @[4, 3, 2, 1, 0])),
   ]
   echo &"1..{tests.len}"
   for i, test in tests:
     let r = findMaxAmplification(test.p.toProgram)
-    doAssert r == test.r, &"got {r}, expected {test.r}"
-    echo "ok {i}"
+    doAssert r == test.r, &"got {r}, expected {test.r} from {test.p.toProgram.toPrettyProgram}"
+    echo &"ok {i}"
   quit(QuitSuccess)
 
 when isMainModule:
