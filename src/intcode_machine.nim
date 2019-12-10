@@ -3,6 +3,8 @@ import strformat
 import strutils
 
 type
+  Memory* = seq[int]
+
   ## Intcode computer opcodes.
   ## Day 2: opAdd, opMultiply, opHalt
   Opcode* = enum
@@ -42,6 +44,7 @@ func paramCount(op: Opcode): Natural =
 
 ## Instructions are encoded as digits from left-to-right mapping to argument modes from last to first, then opcode in last two digits.
 func toInstruction(i: int): Instruction =
+  # debugEcho "instructionizing: ", i  # dies on 0
   var digits = i
 
   # Extract the opcode.
@@ -63,7 +66,8 @@ func toInstruction(i: int): Instruction =
 ##
 ## An Intcode machine's memory starts at address 0.
 ## An Opcode has zero or more parameters.
-proc run*(program: seq[int], world = World()): seq[int] =
+## Returns the final state of the memory.
+proc run*(program: Memory, world = World()): Memory {.discardable.} =
   var mem = program
   var ip = 0
   var didJump = false
@@ -130,6 +134,26 @@ proc toProgram*(line: string): seq[int] =
 proc toString*(mem: seq[int]): string =
   mem.mapIt($it).join(",")
 
+proc toPrettyProgram*(prog: Memory): string =
+  var ip = 0
+  var lines = newSeq[string]()
+  while ip < prog.len:
+    try:
+      var insn = prog[ip].toInstruction
+      var line = $insn.op
+      var args = prog[ip+1 .. ip+insn.op.paramCount]
+      for i, arg in args:
+        line &= " "
+        case insn.params[i]
+        of pmImmediate: line &= &"#{arg}"
+        of pmPosition: line &= &"@{arg}"
+      lines.add &"{ip}: {line}"
+      inc ip, 1 + insn.op.paramCount
+    except RangeError:
+      lines.add &"{ip}: .data {prog[ip]}"
+      inc ip
+  result = lines.join("\n")
+
 proc runString*(text: string): string =
   run(text.toProgram).toString()
 
@@ -137,7 +161,7 @@ type
   FixedInputWorld* = ref object of World
     inputs*: seq[int]
     outputs*: seq[int]
-    shouldEcho: bool
+    shouldEcho*: bool
 
 method onInput*(w: FixedInputWorld): int =
   if w.inputs.len > 1:
