@@ -1,9 +1,11 @@
 import sequtils
 import strformat
 import strutils
+import sugar
 
 type
-  Memory* = seq[int]
+  Int* = BiggestInt
+  Memory* = seq[Int]
 
   ## Intcode computer opcodes.
   ## Day 2: opAdd, opMultiply, opHalt
@@ -29,11 +31,27 @@ type
 
   World* = ref object of RootObj
 
-method onInput*(w: World): int {.base.} =
-  stdin.readLine().parseInt
+  Machine* = ref object of RootObj
+    id: string
+    ip: Int
+    relativeBase: Int
+    mem: Memory
+    onInput: (Machine) -> Int
+    onOutput: (Int, Machine) -> void
 
-method onOutput*(w: World, i: int, ip: int, mem: seq[int]) {.base.} =
-  echo &"output: {i}\n\tip: {ip}\n" #\tmem: {mem}\n"
+proc defaultOnInput(m: Machine): Int = 0
+proc defaultOnOutput(i: Int, m: Machine) = echo &"OUTPUT: {i} from {m.id}"
+
+func makeMachine*(
+  mem: Memory,
+  id: string = "",
+  onInput: (Machine) -> Int = defaultOnInput,
+    onOutput: (Int, Machine) -> void = defaultOnOutput
+  ): Machine = Machine(
+    id: id,
+    mem: mem,
+    onInput: onInput,
+    onOutput: onOutput)
 
 func paramCount(op: Opcode): Natural =
   case op
@@ -43,7 +61,7 @@ func paramCount(op: Opcode): Natural =
   of opHalt: 0
 
 ## Instructions are encoded as digits from left-to-right mapping to argument modes from last to first, then opcode in last two digits.
-func toInstruction(i: int): Instruction =
+func toInstruction(i: Int): Instruction =
   # debugEcho "instructionizing: ", i  # dies on 0
   var digits = i
 
@@ -67,18 +85,17 @@ func toInstruction(i: int): Instruction =
 ## An Intcode machine's memory starts at address 0.
 ## An Opcode has zero or more parameters.
 ## Returns the final state of the memory.
-proc run*(program: Memory, world = World()): Memory {.discardable.} =
-  var mem = program
-  var ip = 0
+proc run*(m: Machine) =
+  m.ip = 0
   var didJump = false
   while true:
     didJump = false
-    let instruction = mem[ip].toInstruction
-    let rawParams = mem[ip+1 ..< ip+1+instruction.op.paramCount]
-    var paramValues: seq[int]
+    let instruction = m.mem[m.ip].toInstruction
+    let rawParams = m.mem[m.ip+1 ..< m.ip+1+instruction.op.paramCount]
+    var paramValues: seq[Int]
     for (mode, rawValue) in instruction.params.zip(rawParams):
       let param = case mode
-        of pmPosition: mem[rawValue]
+        of pmPosition: m.mem[rawValue]
         of pmImmediate: rawValue
       paramValues.add(param)
     assert paramValues.len == rawParams.len
@@ -89,21 +106,21 @@ proc run*(program: Memory, world = World()): Memory {.discardable.} =
     of opAdd:
       assert rawParams.len == 3, fmt"got: {rawParams}"
       assert paramValues.len == 3, fmt"got: {paramValues}"
-      mem[rawParams[2]] = paramValues[0] + paramValues[1]
+      m.mem[rawParams[2]] = paramValues[0] + paramValues[1]
 
     of opMultiply:
-      mem[rawParams[2]] = paramValues[0] * paramValues[1]
+      m.mem[rawParams[2]] = paramValues[0] * paramValues[1]
 
     of opLessThan:
-      mem[rawParams[2]] = if paramValues[0] < paramValues[1]: 1 else: 0
+      m.mem[rawParams[2]] = if paramValues[0] < paramValues[1]: 1 else: 0
 
     of opEquals:
-      mem[rawParams[2]] = if paramValues[0] == paramValues[1]: 1 else: 0
+      m.mem[rawParams[2]] = if paramValues[0] == paramValues[1]: 1 else: 0
 
     of opJumpIfTrue:
       if paramValues[0] != 0:
         echo &"  {paramValues[0]} is non-zero: jumping to {paramValues[1]}"
-        ip = paramValues[1]
+        m.ip = paramValues[1]
         didJump = true
       else:
         echo &"  {paramValues[0]} not non-zero: NOT jumping to {paramValues[1]}"
@@ -111,26 +128,26 @@ proc run*(program: Memory, world = World()): Memory {.discardable.} =
     of opJumpIfFalse:
       if paramValues[0] == 0:
         echo &"  {paramValues[0]} is zero: jumping to {paramValues[1]}"
-        ip = paramValues[1]
+        m.ip = paramValues[1]
         didJump = true
       else:
         echo &"  {paramValues[0]} is not zero: NOT jumping to {paramValues[1]}"
 
     of opInput:
-      mem[rawParams[0]] = world.onInput()
-      echo &"  input received: @{rawParams[0]} := {mem[rawParams[0]]}"
+      m.mem[rawParams[0]] = m.onInput(m)
+      echo &"  input received: @{rawParams[0]} := {m.mem[rawParams[0]]}"
 
     of opOutput:
-      world.onOutput(paramValues[0], ip, mem)
+      m.onOutput(paramValues[0], m)
 
     of opHalt:
-      return mem
+      return
 
     if not didJump:
-      inc ip, 1 + instruction.op.paramCount
+      inc m.ip, 1 + instruction.op.paramCount
 
-proc toProgram*(line: string): seq[int] =
-  line.strip.split(",").map(parseInt)
+proc toProgram*(line: string): seq[Int] =
+  line.strip.split(",").map(parseBiggestInt)
 
 proc toString*(mem: seq[int]): string =
   mem.mapIt($it).join(",")
@@ -154,26 +171,6 @@ proc toPrettyProgram*(prog: Memory): string =
       lines.add &"{ip}: .data {prog[ip]}"
       inc ip
   result = lines.join("\n")
-
-proc runString*(text: string): string =
-  run(text.toProgram).toString()
-
-type
-  FixedInputWorld* = ref object of World
-    inputs*: seq[int]
-    outputs*: seq[int]
-    shouldEcho*: bool
-
-method onInput*(w: FixedInputWorld): int =
-  if w.inputs.len > 1:
-    w.inputs.pop
-  else:
-    w.inputs[0]
-
-method onOutput*(w: FixedInputWorld, i: int, ip: int, mem: seq[int]) =
-  w.outputs.add(i)
-  if w.shouldEcho:
-    procCall onOutput(w.World, i, ip, mem)
 
 when defined(test):
   echo "# testing: intcode_machine"
@@ -220,30 +217,41 @@ when defined(test):
       expected: @[0]),
     ]
   for test in d5p2Tests:
-    let w = FixedInputWorld(inputs: test.inputs)
-    discard run(test.prog, w)
+    var outputs: seq[Int]
+    let m = makeMachine(mem = test.prog, id = test.name, onInput = (
+        m: Machine) => test.inputs[0].BiggestInt, onOutput = (i: Int,
+            m: Machine) => outputs.add i)
+    m.run()
     try:
-      doAssert w.outputs == test.expected, &"got: {w.outputs}, expected: {test.expected} - {test.name}"
+      doAssert outputs == test.expected.mapIt it.BiggestInt, &"got: {outputs}, expected: {test.expected} - {test.name}"
       echo "ok - ", test.name
     except:
       echo "# ", getCurrentExceptionMsg()
       echo "not ok - ", test.name
 
   # day9: relative mode addressing, large memory (setLen index+1 as needed), bignums (i64)
-  var w = FixedInputWorld()
+  echo "\L\L== DAY 9 TESTS =="
+  echo "QUINE"
+  var outputs: seq[Int]
   let quine = "109,1,204,-1,1001,100,1,100,1008,100,16,101,1006,101,0,99"
-  quine.toProgram.run(w)
-  doAssert w.outputs == quine.toProgram
+  var m = makeMachine(mem = quine.toProgram, id = "quine", onOutput = (i: Int,
+      m: Machine) => outputs.add i)
+  m.run()
+  doAssert outputs == quine.toProgram
 
-  w = FixedInputWorld()
+  echo "16 DIGITS"
+  outputs.setLen(0)
   let sixteenDigitOutput = "1102,34915192,34915192,7,4,7,99,0"
-  sixteenDigitOutput.toProgram.run(w)
-  doAssert w.outputs.len == 1
-  doAssert ($w.outputs[0]).len == 16
+  m = makeMachine(mem = sixteenDigitOutput.toProgram, id = "sixteenDigitOutput",
+      onOutput = (i: Int, m: Machine) => outputs.add i)
+  m.run()
+  doAssert outputs.len == 1
+  doAssert ($outputs[0]).len == 16
 
-  w = FixedInputWorld()
+  echo "BIGNUM"
+  outputs.setLen(0)
   let bignum = "104,1125899906842624,99"
-  bignum.toProgram.run(w)
-  # uh-oh - our ints now need to be int64s
-  # time for v2
-  #doAssert w.outputs == @[1125899906842624'i64]
+  m = makeMachine(mem = bigNum.toProgram, id = "bignum",
+      onOutput = (i: Int, m: Machine) => outputs.add i)
+  m.run()
+  doAssert outputs == @[1125899906842624'i64]
