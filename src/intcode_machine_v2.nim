@@ -85,6 +85,11 @@ proc store(m: Machine, index: Int, value: Int) =
     m.mem.setLen index + 1
   m.mem[index] = value
 
+proc load(m: Machine, index: Int): Int =
+  if index >= m.mem.len:
+    return 0
+  return m.mem[index]
+
 ## Runs an Intcode program.
 ##
 ## An Intcode machine's memory starts at address 0.
@@ -94,19 +99,22 @@ proc run*(m: Machine) =
   m.ip = 0
   var didJump = false
   while true:
-    didJump = false
-    let instruction = m.mem[m.ip].toInstruction
-    let rawParams = m.mem[m.ip+1 ..< m.ip+1+instruction.op.paramCount]
+    let instruction = m.load(m.ip).toInstruction
+    let paramCount = instruction.op.paramCount
+    var rawParams: seq[Int]
     var paramValues: seq[Int]
-    for (mode, rawValue) in instruction.params.zip(rawParams):
+    for i, mode in instruction.params:
+      let rawValue = m.load(m.ip + 1 + i)
+      rawParams.add rawValue
       let param = case mode
-        of pmPosition: m.mem[rawValue]
+        of pmPosition: m.load(rawValue)
         of pmImmediate: rawValue
       paramValues.add(param)
     assert paramValues.len == rawParams.len
+    assert paramValues.len == paramCount
 
     echo fmt"running: {instruction}: {rawParams} => {paramValues}"
-
+    didJump = false
     case instruction.op
     of opAdd:
       assert rawParams.len == 3, fmt"got: {rawParams}"
