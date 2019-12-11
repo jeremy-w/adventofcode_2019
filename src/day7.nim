@@ -10,6 +10,7 @@ const
 
 proc runAmplifiers(program: Memory, phaseSettings: openArray[int]): int =
   assert phaseSettings.len == AmpCnt
+  proc echo(str: string) = discard
   echo &"\n\nPHASES: {phaseSettings}"
   var i = 0
   var prevAmpOutput = InitialInputSignal
@@ -24,16 +25,112 @@ proc runAmplifiers(program: Memory, phaseSettings: openArray[int]): int =
   result = prevAmpOutput
   echo &"==> {result}"
 
-proc findMaxAmplification(program: Memory): tuple[maxOutput: int,
-    maxSettings: seq[int]] =
-  var phaseSettings = "01234".toSeq.mapIt(($it).parseInt)
-  result.maxOutput = runAmplifiers(program, phaseSettings)
+type
+  PipeChan*[T] = tuple
+    input: ptr Channel[T]
+    output: ptr Channel[T]
+
+  ## A world whose input and output blocks on channels.
+  ## Intended for use by per-thread machines.
+  ChannelWorld = ref object of World
+    id*: int
+    pipe*: PipeChan[int]
+
+  AmpThreadArgs = tuple
+    id: int
+    program: Memory
+    pipe: PipeChan[int]
+
+method onInput(w: ChannelWorld): int =
+  echo &"CHAN {w.id} RECV"
+  result = w.pipe.input[].recv
+  echo &"CHAN {w.id} GOT: ", result
+
+method onOutput(w: ChannelWorld, i: int, ip: int, mem: seq[int]) =
+  echo &"CHAN {w.id} OUT: ", i
+  w.pipe.output[].send(i)
+
+proc amplifierThread(targs: AmpThreadArgs) {.thread.} =
+  var w = ChannelWorld(pipe: targs.pipe, id: targs.id)
+  echo "Running machine: ", targs.id
+  run(targs.program, w)
+  echo "Machine halted: ", targs.id
+
+proc sanityCheck(chan: ptr Channel[int]) {.thread.} =
+  echo "SANITY: look i got me an int: ", chan[].recv
+
+# "Channels cannot be passed between threads. Use globals or pass them by ptr."
+# Let's do both, inspired by: https://github.com/nim-lang/Nim/blob/1f8c9aff1f8de7294c5326c7e986779ab27f0239/tests/threads/ttryrecv.nim
+var chans: array[0..AmpCnt, Channel[int]]
+
+proc runFeedbackAmplifiers(program: Memory, phaseSettings: openArray[int]): int =
+  assert phaseSettings.len == AmpCnt
+  assert phaseSettings.allIt 5 <= it and it <= 9
+  echo &"FEEDBACK ENGAGED: phaseSettings={phaseSettings}"
+  var
+    threads: array[0..AmpCnt, Thread[AmpThreadArgs]]
+
+  for i in chans.low..chans.high:
+    chans[i] = Channel[int]()
+    chans[i].open(maxItems = 1)
+
+  for i in threads.low..threads.high:
+    let currChanIdx = i
+    # Last machine writes out to the first.
+    let nextChanIdx =
+      if i < chans.high:
+        i + 1
+      else:
+        # The last machine writes to the first channel.
+        chans.low
+    createThread(
+      threads[i],
+      amplifierThread,
+      (id: i, program: program,
+      pipe: (input: addr chans[currChanIdx], output: addr chans[nextChanIdx])))
+
+  # Prime the initial input.
+  echo "sending initial input"
+  chans[0].send(0)
+  # var tid: Thread[ptr Channel[int]]
+  # createThread(tid, sanityCheck, addr chans[0])
+  # chans[0].send(0)
+  echo "joining…"
+  joinThreads(threads)
+  echo "all threads complete"
+
+  # Read the final output to the first machine from the last, if any.
+  var outputChan = chans[chans.low]
+  let output =
+    if outputChan.peek > 0:
+      outputChan.recv
+    else:
+      -1
+  echo &"FEEDBACK OUTPUT: {output} for {phaseSettings}"
+
+
+
+proc findMaxAmplification(program: Memory, useFeedback = false): tuple[
+    maxOutput: int, maxSettings: seq[int]] =
+  var phaseChars =
+    if useFeedback:
+      "56789"
+    else:
+      "01234"
+  var phaseSettings = phaseChars.toSeq.mapIt(($it).parseInt)
+
   result.maxSettings = phaseSettings
+  result.maxOutput =
+    if useFeedback:
+      runFeedbackAmplifiers(program, phaseSettings)
+    else:
+      runAmplifiers(program, phaseSettings)
+
   while phaseSettings.nextPermutation:
     let output = runAmplifiers(program, phaseSettings)
     if output > result.maxOutput:
-      result.maxOutput = output
       result.maxSettings = phaseSettings
+      result.maxOutput = output
 
 when defined(test):
   echo "# d7p1 examples"
@@ -55,10 +152,22 @@ when defined(test):
         maxSettings: @[4, 3, 2, 1, 0])),
   ]
   echo &"1..{tests.len}"
+  # for i, test in tests:
+  #   let r = findMaxAmplification(test.p.toProgram)
+  #   doAssert r == test.r, &"got {r}, expected {test.r} from {test.p.toProgram.toPrettyProgram}"
+  #   echo &"ok {i}"
+
+  echo "# d7p2 examples"
+  let feedbackTests = @[
+    (p: "3,26,1001,26,-4,26,3,27,1002,27,2,27,1,27,26,27,4,27,1001,28,-1,28,1005,28,6,99,0,0,5",
+        r: (maxOutput: 139629729, maxSettings: @[9, 8, 7, 6, 5])),
+  ]
+  echo &"1..{feedbackTests.len}"
   for i, test in tests:
-    let r = findMaxAmplification(test.p.toProgram)
+    let r = findMaxAmplification(test.p.toProgram, useFeedback = true)
     doAssert r == test.r, &"got {r}, expected {test.r} from {test.p.toProgram.toPrettyProgram}"
     echo &"ok {i}"
+
   quit(QuitSuccess)
 
 when isMainModule:
@@ -66,4 +175,8 @@ when isMainModule:
   var program = readFile("input/day7.txt").toProgram
   echo program.toPrettyProgram
   let (maxOutput, maxSettings) = findMaxAmplification(program)
-  echo &"\tmaxOutput: {maxOutput} from phase settins: {maxSettings}"
+  echo &"\tmaxOutput: {maxOutput} from phase settings: {maxSettings}"
+
+  echo "day 7, part 2:"
+  let feedback = findMaxAmplification(program, useFeedback = true)
+  echo &"\tmaxOutput: {feedback.maxOutput} from phase settings: {feedback.maxSettings}"

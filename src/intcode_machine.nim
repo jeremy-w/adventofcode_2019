@@ -118,6 +118,7 @@ proc run*(program: Memory, world = World()): Memory {.discardable.} =
 
     of opInput:
       mem[rawParams[0]] = world.onInput()
+      echo &"  input received: @{rawParams[0]} := {mem[rawParams[0]]}"
 
     of opOutput:
       world.onOutput(paramValues[0], ip, mem)
