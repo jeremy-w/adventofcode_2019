@@ -150,7 +150,7 @@ proc toPrettyProgram*(prog: Memory): string =
         of pmPosition: line &= &"@{arg}"
       lines.add &"{ip}: {line}"
       inc ip, 1 + insn.op.paramCount
-    except RangeError:
+    except RangeError, IndexError:
       lines.add &"{ip}: .data {prog[ip]}"
       inc ip
   result = lines.join("\n")

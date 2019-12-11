@@ -61,19 +61,22 @@ proc sanityCheck(chan: ptr Channel[int]) {.thread.} =
 
 # "Channels cannot be passed between threads. Use globals or pass them by ptr."
 # Let's do both, inspired by: https://github.com/nim-lang/Nim/blob/1f8c9aff1f8de7294c5326c7e986779ab27f0239/tests/threads/ttryrecv.nim
-var chans: array[0..AmpCnt, Channel[int]]
+var chans: array[0..AmpCnt-1, Channel[int]]
 
 proc runFeedbackAmplifiers(program: Memory, phaseSettings: openArray[int]): int =
   assert phaseSettings.len == AmpCnt
   assert phaseSettings.allIt 5 <= it and it <= 9
   echo &"FEEDBACK ENGAGED: phaseSettings={phaseSettings}"
   var
-    threads: array[0..AmpCnt, Thread[AmpThreadArgs]]
+    threads: array[0..AmpCnt-1, Thread[AmpThreadArgs]]
+  assert threads.len == AmpCnt
 
+  # Create and open all the channels.
   for i in chans.low..chans.high:
     chans[i] = Channel[int]()
     chans[i].open(maxItems = 1)
 
+  # Start all the machines running. Send their phase config.
   for i in threads.low..threads.high:
     let currChanIdx = i
     # Last machine writes out to the first.
@@ -83,6 +86,12 @@ proc runFeedbackAmplifiers(program: Memory, phaseSettings: openArray[int]): int 
       else:
         # The last machine writes to the first channel.
         chans.low
+
+    # Send phase setting.
+    let phaseSetting = phaseSettings[currChanIdx - threads.low]
+    chans[currChanIdx].send(phaseSetting)
+
+    echo &"wiring thread {i} to read {currChanIdx} and write {nextChanIdx}"
     createThread(
       threads[i],
       amplifierThread,
@@ -101,12 +110,12 @@ proc runFeedbackAmplifiers(program: Memory, phaseSettings: openArray[int]): int 
 
   # Read the final output to the first machine from the last, if any.
   var outputChan = chans[chans.low]
-  let output =
+  result =
     if outputChan.peek > 0:
       outputChan.recv
     else:
       -1
-  echo &"FEEDBACK OUTPUT: {output} for {phaseSettings}"
+  echo &"FEEDBACK OUTPUT: {result} for {phaseSettings}"
 
 
 
@@ -119,15 +128,17 @@ proc findMaxAmplification(program: Memory, useFeedback = false): tuple[
       "01234"
   var phaseSettings = phaseChars.toSeq.mapIt(($it).parseInt)
 
-  result.maxSettings = phaseSettings
-  result.maxOutput =
+  let runProc =
     if useFeedback:
-      runFeedbackAmplifiers(program, phaseSettings)
+      runFeedbackAmplifiers
     else:
-      runAmplifiers(program, phaseSettings)
+      runAmplifiers
+
+  result.maxSettings = phaseSettings
+  result.maxOutput = runProc(program, phaseSettings)
 
   while phaseSettings.nextPermutation:
-    let output = runAmplifiers(program, phaseSettings)
+    let output = runProc(program, phaseSettings)
     if output > result.maxOutput:
       result.maxSettings = phaseSettings
       result.maxOutput = output
@@ -163,7 +174,7 @@ when defined(test):
         r: (maxOutput: 139629729, maxSettings: @[9, 8, 7, 6, 5])),
   ]
   echo &"1..{feedbackTests.len}"
-  for i, test in tests:
+  for i, test in feedbackTests:
     let r = findMaxAmplification(test.p.toProgram, useFeedback = true)
     doAssert r == test.r, &"got {r}, expected {test.r} from {test.p.toProgram.toPrettyProgram}"
     echo &"ok {i}"
