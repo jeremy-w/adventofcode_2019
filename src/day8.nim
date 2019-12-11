@@ -6,13 +6,14 @@ const
   Width = 25
   Height = 6
   LayerLen = Width*Height
-  Box = '\219'
+  Box = '@'
 
 type
   Pixel = int
   Layer = seq[Pixel]
   Image = seq[Layer]
 
+# ACK THE IMAGE IS WHITE ON BLACK, NOT BLACK ON WHITE
 const
   Black = 0
   White = 1
@@ -38,16 +39,16 @@ proc imageString(image: Image; width, height: int): tuple[asText: string;
     var line = ""
     var pbmLine = ""
     for c in 0..width-1:
-      for layer in image:
+      for i, layer in image:
         let pixel = layer[r*width + c]
         case pixel
         of Black:
-          line.add Box
-          pbmLine.add '1'
+          line.add &" "
+          pbmLine.add '0'
           break
         of White:
-          line.add ' '
-          pbmLine.add '0'
+          line.add &"{Box}"
+          pbmLine.add '1'
           break
         of Clear:
           continue
@@ -80,16 +81,16 @@ when isMainModule:
 
 echo "checking example image"
 let example = "0222112222120000".parseLayers(width = 2, height = 2)
-echo example
+# echo example
 assert example.len == 4 # 4 layers
 assert example[0].len == 2*2 # 4 pixels per layer
 let egImg = example.imageString(2, 2)
-echo egImg.asText
-echo egImg.asPBM
-assert egImg.asText == &"{Box} \L {Box}"
+  # echo egImg.asText
+  # echo egImg.asPBM
+assert egImg.asText == &" {Box}\L{Box} "
 
 # Layers are painted in reverse order, so first layer is on top.
 let r = imageString(layers, Width, Height)
-echo r
-writeFile("day8.pbm", r.asPBM)
+  # echo r
+  # writeFile("day8.pbm", r.asPBM)
 echo r.asText
