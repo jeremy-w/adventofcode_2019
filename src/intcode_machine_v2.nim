@@ -80,6 +80,11 @@ func toInstruction(i: Int): Instruction =
 
     result.params.add(pm)
 
+proc store(m: Machine, index: Int, value: Int) =
+  if index >= m.mem.len:
+    m.mem.setLen index + 1
+  m.mem[index] = value
+
 ## Runs an Intcode program.
 ##
 ## An Intcode machine's memory starts at address 0.
@@ -106,16 +111,20 @@ proc run*(m: Machine) =
     of opAdd:
       assert rawParams.len == 3, fmt"got: {rawParams}"
       assert paramValues.len == 3, fmt"got: {paramValues}"
-      m.mem[rawParams[2]] = paramValues[0] + paramValues[1]
+      let value = paramValues[0] + paramValues[1]
+      m.store(rawParams[2], value)
 
     of opMultiply:
-      m.mem[rawParams[2]] = paramValues[0] * paramValues[1]
+      let value = paramValues[0] * paramValues[1]
+      m.store(rawParams[2], value)
 
     of opLessThan:
-      m.mem[rawParams[2]] = if paramValues[0] < paramValues[1]: 1 else: 0
+      let value = if paramValues[0] < paramValues[1]: 1 else: 0
+      m.store(rawParams[2], value)
 
     of opEquals:
-      m.mem[rawParams[2]] = if paramValues[0] == paramValues[1]: 1 else: 0
+      let value = if paramValues[0] == paramValues[1]: 1 else: 0
+      m.store(rawParams[2], value)
 
     of opJumpIfTrue:
       if paramValues[0] != 0:
@@ -134,7 +143,8 @@ proc run*(m: Machine) =
         echo &"  {paramValues[0]} is not zero: NOT jumping to {paramValues[1]}"
 
     of opInput:
-      m.mem[rawParams[0]] = m.onInput(m)
+      let value = m.onInput(m)
+      m.store(rawParams[0], value)
       echo &"  input received: @{rawParams[0]} := {m.mem[rawParams[0]]}"
 
     of opOutput:
