@@ -220,6 +220,7 @@ when defined(test):
       expected: @[0]),
     ]
   for test in d5p2Tests:
+    echo &"# testing: {test.name}"
     let w = FixedInputWorld(inputs: test.inputs)
     discard run(test.prog, w)
     try:
@@ -230,20 +231,21 @@ when defined(test):
       echo "not ok - ", test.name
 
   # day9: relative mode addressing, large memory (setLen index+1 as needed), bignums (i64)
-  var w = FixedInputWorld()
-  let quine = "109,1,204,-1,1001,100,1,100,1008,100,16,101,1006,101,0,99"
-  quine.toProgram.run(w)
-  doAssert w.outputs == quine.toProgram
+  when false:
+    var w = FixedInputWorld()
+    let quine = "109,1,204,-1,1001,100,1,100,1008,100,16,101,1006,101,0,99"
+    quine.toProgram.run(w)
+    doAssert w.outputs == quine.toProgram
 
-  w = FixedInputWorld()
-  let sixteenDigitOutput = "1102,34915192,34915192,7,4,7,99,0"
-  sixteenDigitOutput.toProgram.run(w)
-  doAssert w.outputs.len == 1
-  doAssert ($w.outputs[0]).len == 16
+    w = FixedInputWorld()
+    let sixteenDigitOutput = "1102,34915192,34915192,7,4,7,99,0"
+    sixteenDigitOutput.toProgram.run(w)
+    doAssert w.outputs.len == 1
+    doAssert ($w.outputs[0]).len == 16
 
-  w = FixedInputWorld()
-  let bignum = "104,1125899906842624,99"
-  bignum.toProgram.run(w)
-  # uh-oh - our ints now need to be int64s
-  # time for v2
-  #doAssert w.outputs == @[1125899906842624'i64]
+    w = FixedInputWorld()
+    let bignum = "104,1125899906842624,99"
+    bignum.toProgram.run(w)
+    # uh-oh - our ints now need to be int64s
+    # time for v2
+    #doAssert w.outputs == @[1125899906842624'i64]
