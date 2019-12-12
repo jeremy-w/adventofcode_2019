@@ -8,7 +8,6 @@ type
   Memory* = seq[Int]
 
   ## Intcode computer opcodes.
-  ## Day 2: opAdd, opMultiply, opHalt
   Opcode* = enum
     opAdd = (1, "add")
     opMultiply = (2, "mul")
@@ -28,8 +27,6 @@ type
   Instruction* = tuple
     op: Opcode
     params: seq[ParamMode]
-
-  World* = ref object of RootObj
 
   Machine* = ref object of RootObj
     id: string
@@ -235,6 +232,7 @@ when defined(test):
       expected: @[0]),
     ]
   for test in d5p2Tests:
+    echo &"# testing: {test.name}"
     var outputs: seq[Int]
     let m = makeMachine(mem = test.prog, id = test.name, onInput = (
         m: Machine) => test.inputs[0].BiggestInt, onOutput = (i: Int,
