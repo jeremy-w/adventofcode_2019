@@ -1,5 +1,7 @@
 # i think this one is raytracing.
+import math
 import sequtils
+import sets
 import strformat
 import strutils
 
@@ -45,7 +47,18 @@ func stringForDisplay(m: AsteroidMap): string =
 func visibleFrom(m: AsteroidMap, p: Point): int =
   if p.row >= m.nrows or p.col >= m.ncols:
     return -1
-  return 0
+  var unitPoints = initHashSet[tuple[row: float, col: float]]()
+  for q in m.asteroids:
+    if q == p:
+      continue
+    let dr = q.row - p.row
+    let dc = q.col - p.col
+    let dist = sqrt(float(dr*dr + dc*dc))
+    let u = (row: q.row.float / dist, col: q.col.float / dist)
+    unitPoints.incl u
+  debugEcho &"p={p} sees={unitPoints}"
+  return unitPoints.len
+
 
 when defined(test):
   let testMap = """
