@@ -5,6 +5,7 @@ import sugar
 
 const
   TestModeInput = 1
+  SensorModeInput = 2
 
 when isMainModule:
   let prog = readFile("input/day9.txt").toProgram
@@ -19,3 +20,9 @@ when isMainModule:
       outputs[0..^2]
       .mapIt(it.toInstruction)
       .join("\L* ")
+
+  outputs.setLen 0
+  let m2 = makeMachine(id = "BOOST", mem = prog, onInput = (m: Machine) =>
+  SensorModeInput.Int, onOutput = (i: Int, m: Machine) => outputs.add i)
+  m2.run()
+  echo "\L\L=== OUTPUTS ===\L", outputs.join("\L")
