@@ -17,6 +17,7 @@ type
     opJumpIfFalse = (6, "brz")
     opLessThan = (7, "lt?")
     opEquals = (8, "eq?")
+    opAdjustRelativeBase = (9, "rba")
     opHalt = (99, "hlt")
 
   ## Parameter mode, for opcodes that take parameters.
@@ -55,7 +56,7 @@ func paramCount(op: Opcode): Natural =
   case op
   of opAdd, opMultiply, opLessThan, opEquals: 3
   of opJumpIfTrue, opJumpIfFalse: 2
-  of opInput, opOutput: 1
+  of opInput, opOutput, opAdjustRelativeBase: 1
   of opHalt: 0
 
 ## Instructions are encoded as digits from left-to-right mapping to argument modes from last to first, then opcode in last two digits.
@@ -81,13 +82,13 @@ func toInstruction*(i: Int): Instruction =
 proc store(m: Machine, index: Int, value: Int) =
   if index >= m.mem.len:
     m.mem.setLen index + 1
-  echo &">> store[{index}] := {value}"
+  # echo &">> store[{index}] := {value}"
   m.mem[index] = value
 
 proc load(m: Machine, index: Int): Int =
   if index >= m.mem.len:
     return 0
-  echo &">> load[{index}]"
+  # echo &">> load[{index}]"
   return m.mem[index]
 
 ## Runs an Intcode program.
@@ -158,6 +159,9 @@ proc run*(m: Machine) =
 
     of opOutput:
       m.onOutput(paramValues[0], m)
+
+    of opAdjustRelativeBase:
+      m.relativeBase += paramValues[0]
 
     of opHalt:
       return
