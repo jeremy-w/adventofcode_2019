@@ -23,6 +23,7 @@ type
   ParamMode* = enum
     pmPosition = 0  ## The parameter is the address of the value. This is the default.
     pmImmediate = 1 ## The parameter is the value itself.
+    pmRelative = 2
 
   Instruction* = tuple
     op: Opcode
@@ -106,6 +107,7 @@ proc run*(m: Machine) =
       let param = case mode
         of pmPosition: m.load(rawValue)
         of pmImmediate: rawValue
+        of pmRelative: m.load(m.relativeBase + rawValue)
       paramValues.add(param)
     assert paramValues.len == rawParams.len
     assert paramValues.len == paramCount
@@ -180,6 +182,7 @@ proc toPrettyProgram*(prog: Memory): string =
         case insn.params[i]
         of pmImmediate: line &= &"#{arg}"
         of pmPosition: line &= &"@{arg}"
+        of pmRelative: line &= &"R{arg}"
       lines.add &"{ip}: {line}"
       inc ip, 1 + insn.op.paramCount
     except RangeError, IndexError:
