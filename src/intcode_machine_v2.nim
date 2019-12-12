@@ -115,6 +115,17 @@ proc run*(m: Machine) =
     assert paramValues.len == rawParams.len
     assert paramValues.len == paramCount
 
+    # Some commands write to their last param.
+    # In this case, we need the computed position, rather than the value at that position.
+    let target =
+      if rawParams.len > 0:
+        case instruction.params[^1]
+          of pmImmediate: -1'i64 # bogus param mode - should trigger a crash
+          of pmPosition: rawParams[^1]
+          of pmRelative: m.relativeBase + rawParams[^1]
+      else:
+        -1
+
     echo fmt"running: {instruction}: {rawParams} => {paramValues}"
     didJump = false
     case instruction.op
@@ -122,19 +133,19 @@ proc run*(m: Machine) =
       assert rawParams.len == 3, fmt"got: {rawParams}"
       assert paramValues.len == 3, fmt"got: {paramValues}"
       let value = paramValues[0] + paramValues[1]
-      m.store(rawParams[2], value)
+      m.store(target, value)
 
     of opMultiply:
       let value = paramValues[0] * paramValues[1]
-      m.store(rawParams[2], value)
+      m.store(target, value)
 
     of opLessThan:
       let value = if paramValues[0] < paramValues[1]: 1 else: 0
-      m.store(rawParams[2], value)
+      m.store(target, value)
 
     of opEquals:
       let value = if paramValues[0] == paramValues[1]: 1 else: 0
-      m.store(rawParams[2], value)
+      m.store(target, value)
 
     of opJumpIfTrue:
       if paramValues[0] != 0:
@@ -154,8 +165,8 @@ proc run*(m: Machine) =
 
     of opInput:
       let value = m.onInput(m)
-      m.store(rawParams[0], value)
-      echo &"  input received: @{rawParams[0]} := {m.mem[rawParams[0]]}"
+      m.store(target, value)
+      echo &"  input received: @{target} := {value}"
 
     of opOutput:
       m.onOutput(paramValues[0], m)
