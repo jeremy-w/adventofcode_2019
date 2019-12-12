@@ -1,9 +1,12 @@
 # i think this one is raytracing.
+import algorithm
 import math
 import sequtils
 import sets
 import strformat
 import strutils
+import sugar
+import tables
 
 type
   Point* = tuple
@@ -44,6 +47,18 @@ func stringForDisplay(m: AsteroidMap): string =
     rows[p.row][p.col] = Asteroid
   result = rows.join("\L")
 
+func angle(origin: Point, tail: Point): float64 =
+  if origin == tail: return -99
+  let dr = tail.row - origin.row
+  let dc = tail.col - origin.col
+  result = arctan2(dc.float64, dr.float64)
+
+func dist(origin: Point, tail: Point): float64 =
+  if origin == tail: return 0
+  let dr = float64(tail.row - origin.row)
+  let dc = float64(tail.col - origin.col)
+  result = dr*dr + dc*dc
+
 func visibleFrom(m: AsteroidMap, p: Point): int =
   if p.row >= m.nrows or p.col >= m.ncols:
     return -1
@@ -51,9 +66,7 @@ func visibleFrom(m: AsteroidMap, p: Point): int =
   for q in m.asteroids:
     if q == p:
       continue
-    let dr = q.row - p.row
-    let dc = q.col - p.col
-    let slope = arctan2(dc.float64, dr.float64)
+    let slope = p.angle(q)
     slopes.incl slope
   # debugEcho &"p={p} sees={slopes}"
   return slopes.len
@@ -65,11 +78,52 @@ func findAsteroidSeeingMostOthers(m: AsteroidMap): tuple[asteroid: Point, count:
 
 func findVaporizationOrder(m: AsteroidMap, at: Point): seq[Point] =
   # Given a laser that starts pointing straight up and spins around destroying 1 asteroid per slope, collect the destroyed asteroids in the result.
-  result = newSeqOfCap[Point](m.asteroids.len)
-  # TODO: actually implement this
-  return m.asteroids
+  const InitAngle = PI # This sure seems like it should be pi/2, but then the tests fail.
+  let targets = m.asteroids.filterIt it != at
+  type Decorated = tuple[angle: float64, dist: float64, asteroid: Point]
+  var labeledTargets = targets
+    .mapIt((angle: at.angle(it), dist: at.dist(it), asteroid: it))
+    # Sort descending by angle but ascending by distance
+    .sorted(
+      order = SortOrder.Descending,
+      cmp = (left: Decorated, right: Decorated) =>
+        cmp((left.angle, -left.dist), (right.angle, -right.dist)))
+  debugEcho "labeledTargets: ", labeledTargets.join("\L")
+
+  var initIndex = 0
+  block:
+    var prevAngle = -Inf
+    for i, it in labeledTargets:
+      if it.angle >= InitAngle and it.angle != prevAngle:
+        initIndex = i
+        prevAngle = it.angle
+
+  debugEcho &"InitAngle={InitAngle}, initIndex={initIndex} with {labeledTargets[initIndex]}"
+  #debugEcho &"before: {labeledTargets[initIndex - 1]}, after: {labeledTargets[initIndex + 1]}"
+  result = newSeqOfCap[Point](targets.len)
+
+  var i = initIndex
+  proc wrappingIncr(i: var int) =
+    inc i
+    if i > labeledTargets.high:
+      i = labeledTargets.low
+
+  var prevAngle = -Inf
+  while result.len < labeledTargets.len:
+    # debugEcho &"{result.len} < {labeledTargets.len}"
+    let candidate = labeledTargets[i]
+    wrappingIncr i
+    let isAlreadyDestroyed = result.contains(candidate.asteroid)
+    let isBlocked = prevAngle == candidate.angle
+    if isAlreadyDestroyed:
+      prevAngle = -Inf
+    if not isAlreadyDestroyed and not isBlocked:
+      result.add candidate.asteroid
+      prevAngle = candidate.angle
+
 
 when defined(test):
+  echo "\L\Ltesting: day10, part1"
   let testMap = """
 .#..#
 .....
@@ -89,6 +143,7 @@ when defined(test):
   doAssert best.asteroid == (row: 4.Natural, col: 3.Natural), &"got: {best}"
   doAssert best.count == 8
 
+  echo "\L\Ltesting: day10, part2"
   let bigMap = """
 .#..##.###...#######
 ##.############..##.
@@ -132,6 +187,7 @@ assert map.stringForDisplay == text
 echo &"day 10, part 1"
 let bestLocation = map.findAsteroidSeeingMostOthers
 echo &"best location: {bestLocation}"
+assert bestLocation == (asteroid: (row: 13.Natural, col: 11.Natural), count: 227)
 
 echo "day 10, part 2"
 let order = map.findVaporizationOrder(at = bestLocation.asteroid)
