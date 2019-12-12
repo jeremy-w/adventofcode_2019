@@ -55,9 +55,13 @@ func visibleFrom(m: AsteroidMap, p: Point): int =
     let dc = q.col - p.col
     let slope = arctan2(dc.float64, dr.float64)
     slopes.incl slope
-  debugEcho &"p={p} sees={slopes}"
+  # debugEcho &"p={p} sees={slopes}"
   return slopes.len
 
+func findAsteroidSeeingMostOthers(m: AsteroidMap): tuple[asteroid: Point, count: int] =
+  let counts = m.asteroids.mapIt m.visibleFrom(it)
+  let highest = counts.max
+  result = (asteroid: m.asteroids[counts.find highest], count: highest)
 
 when defined(test):
   let testMap = """
@@ -74,6 +78,10 @@ when defined(test):
     let c = counts[i]
     doAssert vis == c, &"got: {vis} for {c} at {a}"
     echo &"ok - {i} {a}"
+  let best = testMap.findAsteroidSeeingMostOthers
+  # Note that their notation is actually (col, row).
+  doAssert best.asteroid == (row: 4.Natural, col: 3.Natural), &"got: {best}"
+  doAssert best.count == 8
 
 var text = readFile("input/day10.txt")
 text.stripLineEnd
@@ -82,3 +90,5 @@ let map = text.toAsteroidMap
 assert map.stringForDisplay == text
 
 echo &"day 10, part 1"
+let bestLocation = map.findAsteroidSeeingMostOthers
+echo &"best location: {bestLocation}"
