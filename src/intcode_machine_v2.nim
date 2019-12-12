@@ -61,7 +61,7 @@ func paramCount(op: Opcode): Natural =
   of opHalt: 0
 
 ## Instructions are encoded as digits from left-to-right mapping to argument modes from last to first, then opcode in last two digits.
-func toInstruction(i: Int): Instruction =
+func toInstruction*(i: Int): Instruction =
   # debugEcho "instructionizing: ", i  # dies on 0
   var digits = i
 
