@@ -63,6 +63,12 @@ func findAsteroidSeeingMostOthers(m: AsteroidMap): tuple[asteroid: Point, count:
   let highest = counts.max
   result = (asteroid: m.asteroids[counts.find highest], count: highest)
 
+func findVaporizationOrder(m: AsteroidMap, at: Point): seq[Point] =
+  # Given a laser that starts pointing straight up and spins around destroying 1 asteroid per slope, collect the destroyed asteroids in the result.
+  result = newSeqOfCap[Point](m.asteroids.len)
+  # TODO: actually implement this
+  return m.asteroids
+
 when defined(test):
   let testMap = """
 .#..#
@@ -83,6 +89,40 @@ when defined(test):
   doAssert best.asteroid == (row: 4.Natural, col: 3.Natural), &"got: {best}"
   doAssert best.count == 8
 
+  let bigMap = """
+.#..##.###...#######
+##.############..##.
+.#.######.########.#
+.###.#######.####.#.
+#####.##.#.##.###.##
+..#####..#.#########
+####################
+#.####....###.#.#.##
+##.#################
+#####.##.###..####..
+..######..##.#######
+####.##.####...##..#
+.#####..#.######.###
+##...#.##########...
+#.##########.#######
+.####.#.###.###.#.##
+....##.##.###..#####
+.#.#.###########.###
+#.#.#.#####.####.###
+###.##.####.##.#..##""".toAsteroidMap
+  let bigBest = bigMap.findAsteroidSeeingMostOthers
+  doAssert bigBest.asteroid == (row: 13.Natural, col: 11.Natural), &"got: {bigBest}"
+  doAssert bigBest.count == 210, &"got: {bigBest}"
+  let destroyed = bigMap.findVaporizationOrder(at = bigBest.asteroid)
+  proc Pt(p: tuple[col: int, row: int]): auto = (row: p.row.Natural,
+      col: p.col.Natural)
+  doAssert destroyed[0] == (col: 11, row: 12).Pt, &"got: {destroyed[0]}"
+  doAssert destroyed[1] == (col: 12, row: 1).Pt, &"got: {destroyed[1]}"
+  doAssert destroyed[2] == (col: 12, row: 2).Pt, &"got: {destroyed[2]}"
+  doAssert destroyed[10] == (col: 12, row: 8).Pt, &"got: {destroyed[10]}"
+  doAssert destroyed[20] == (col: 16, row: 0).Pt, &"got: {destroyed[20]}"
+  doAssert destroyed[200] == (col: 8, row: 2).Pt, &"got: {destroyed[200]}"
+
 var text = readFile("input/day10.txt")
 text.stripLineEnd
 
@@ -92,3 +132,9 @@ assert map.stringForDisplay == text
 echo &"day 10, part 1"
 let bestLocation = map.findAsteroidSeeingMostOthers
 echo &"best location: {bestLocation}"
+
+echo "day 10, part 2"
+let order = map.findVaporizationOrder(at = bestLocation.asteroid)
+let twoHundredth = order[199]
+let answer = 100*twoHundredth.col + twoHundredth.row
+echo &"200th asteroid vaporized is: {twoHundredth}, so answer is: {answer}"
