@@ -47,17 +47,16 @@ func stringForDisplay(m: AsteroidMap): string =
 func visibleFrom(m: AsteroidMap, p: Point): int =
   if p.row >= m.nrows or p.col >= m.ncols:
     return -1
-  var unitPoints = initHashSet[tuple[row: float, col: float]]()
+  var slopes = initHashSet[float]()
   for q in m.asteroids:
     if q == p:
       continue
     let dr = q.row - p.row
     let dc = q.col - p.col
-    let dist = sqrt(float(dr*dr + dc*dc))
-    let u = (row: q.row.float / dist, col: q.col.float / dist)
-    unitPoints.incl u
-  debugEcho &"p={p} sees={unitPoints}"
-  return unitPoints.len
+    let slope = dc / dr
+    slopes.incl slope
+  debugEcho &"p={p} sees={slopes}"
+  return slopes.len
 
 
 when defined(test):
@@ -69,14 +68,12 @@ when defined(test):
 ...##""".toAsteroidMap
   doAssert testMap.ncols == 5, &"{testMap}"
   doAssert testMap.nrows == 5, &"{testMap}"
-  let tests = @[
-    (r: 0, c: 1, vis: 7),
-    (r: 0, c: 4, vis: 7),
-    (r: 2, c: 0, vis: 6),
-  ]
-  for t in tests:
-    let vis = testMap.visibleFrom((row: t.r.Natural, col: t.c.Natural))
-    doAssert vis == t.vis, &"got: {vis} for {t}"
+  let counts = @[7, 7, 6, 7, 7, 7, 5, 7, 8, 7]
+  for i, a in testMap.asteroids:
+    let vis = testMap.visibleFrom(a)
+    let c = counts[i]
+    doAssert vis == c, &"got: {vis} for {c} at {a}"
+    echo &"ok - {i} {a}"
 
 var text = readFile("input/day10.txt")
 text.stripLineEnd
