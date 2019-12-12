@@ -53,7 +53,7 @@ func visibleFrom(m: AsteroidMap, p: Point): int =
       continue
     let dr = q.row - p.row
     let dc = q.col - p.col
-    let slope = dc / dr
+    let slope = arctan2(dc.float64, dr.float64)
     slopes.incl slope
   debugEcho &"p={p} sees={slopes}"
   return slopes.len
