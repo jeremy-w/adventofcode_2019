@@ -81,11 +81,13 @@ func toInstruction*(i: Int): Instruction =
 proc store(m: Machine, index: Int, value: Int) =
   if index >= m.mem.len:
     m.mem.setLen index + 1
+  echo &">> store[{index}] := {value}"
   m.mem[index] = value
 
 proc load(m: Machine, index: Int): Int =
   if index >= m.mem.len:
     return 0
+  echo &">> load[{index}]"
   return m.mem[index]
 
 ## Runs an Intcode program.
