@@ -90,7 +90,7 @@ proc makeRobot(name: string = ""): Robot =
   var isColor = true # otherwise is turndir
   r.brain.onOutput = proc(i: Int, _: Machine) =
     if isColor:
-      r.trail.add (r.loc, i.int)
+      r.paint(i.int)
     else:
       r.turn(towards = i.int)
       r.walk()
