@@ -87,7 +87,14 @@ proc makeRobot(name: string = ""): Robot =
   let brain = makeMachine(mem = readFile("input/day11.txt").toProgram, id = name)
   var r = Robot(brain: brain, loc: (0, 0), dir: N, trail: newSeq[Mark]())
   r.brain.onInput = (_: Machine) => r.trail.colorAt(r.loc).Int
-  r.brain.onOutput = (i: Int, _: Machine) => r.trail.add (r.loc, i.int)
+  var isColor = true # otherwise is turndir
+  r.brain.onOutput = proc(i: Int, _: Machine) =
+    if isColor:
+      r.trail.add (r.loc, i.int)
+    else:
+      r.turn(towards = i.int)
+      r.walk()
+    isColor = not isColor
   return r
 
 proc uniqueLocations(trail: seq[Mark]): int =
