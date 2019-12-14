@@ -1,6 +1,7 @@
 # Day 12: Orbital Simulation
 import math
 import sequtils
+import strformat
 import strutils
 
 type
@@ -9,6 +10,23 @@ type
     pos: Point
     vel: Point
   Sim = seq[Moon]
+
+func toSeq(p: Point): seq[int] =
+  @[p.x, p.y, p.z]
+
+proc `$`(m: Moon): string =
+  var maxDigits = max(m.pos.toSeq.mapIt(len($it)).max, m.vel.toSeq.mapIt(len($it)).max)
+  result = "pos=<"
+  var parts = newSeq[string]()
+  for (val, comp) in m.pos.toSeq.zip("xyz"):
+    parts.add(&"{comp}={alignString($val, maxDigits, align = '>')}")
+  result.add(parts.join(", "))
+  result.add(">, vel=<")
+  parts.setLen(0)
+  for (val, comp) in m.vel.toSeq.zip("xyz"):
+    parts.add(&"{comp}={alignString($val, maxDigits, align = '>')}")
+  result.add(parts.join(", "))
+  result.add(">")
 
 #region Parsing
 func toMoon(line: string): Moon =
@@ -95,6 +113,39 @@ func run(s: var Sim, steps: int) =
   for i in countup(1, steps):
     s.step()
 #endregion
+
+when defined(test):
+  echo "testing: example 1"
+  var ex1 = """
+<x=-1, y=0, z=2>
+<x=2, y=-10, z=-7>
+<x=4, y=-8, z=8>
+<x=3, y=5, z=-1>""".toSim
+  doAssert ex1.len == 4
+  ex1.run(0)
+  doAssert ex1.mapIt(it.pos) ==
+    @[(x: -1, y: 0, z: 2),
+    (x: 2, y: -10, z: -7),
+    (x: 4, y: -8, z: 8),
+    (x: 3, y: 5, z: -1)], &"got: {ex1}"
+  doAssert ex1.mapIt(it.vel) ==
+      @[(x: 0, y: 0, z: 0),
+      (x: 0, y: 0, z: 0),
+      (x: 0, y: 0, z: 0),
+      (x: 0, y: 0, z: 0)], &"got: {ex1}"
+  echo "ok - 0 steps"
+  ex1.run(1)
+  doAssert ex1.mapIt(it.pos) ==
+      @[(x: 2, y: -1, z: 1),
+      (x: 3, y: -7, z: -4),
+      (x: 1, y: -7, z: 5),
+      (x: 2, y: 2, z: 0)], &"got: {ex1}"
+  doAssert ex1.mapIt(it.vel) ==
+      @[(x: 3, y: -1, z: -1),
+      (x: 1, y: 3, z: 3),
+      (x: -3, y: 1, z: -3),
+      (x: -1, y: -3, z: 1)], &"got: {ex1}"
+  echo "ok - 1 step"
 
 var sim = readFile("input/day12.txt").toSim
 sim.run(steps = 1000)
