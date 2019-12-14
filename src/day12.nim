@@ -1,7 +1,6 @@
 # Day 12: Orbital Simulation
 import math
 import sequtils
-import sets
 import strformat
 import strutils
 
@@ -120,19 +119,15 @@ func run(s: var Sim, steps: int) =
   for i in countup(1, steps):
     s.step()
 
-type SimState = tuple[pos: seq[Point], vel: seq[Point]]
-
-func findRepeatedState(s: var Sim): tuple[stepCnt: BiggestUint,
-    state: SimState] =
-  var stepCnt = 0.BiggestUint
-  var states = initHashSet[SimState]()
-  var state: SimState = (s.mapIt it.pos, s.mapIt it.vel)
-  while not states.containsOrIncl(state):
+func findStepsTillRepeatedState(s: var Sim): BiggestUint =
+  # Internet points out that this reaches a still point then runs backwards.
+  # So find the next still point (all zero velocity), double that, and done.
+  s.step
+  var stepCnt = 1.BiggestUint
+  while not s.allIt(it.vel == (0, 0, 0)):
     s.step
     inc stepCnt
-    state = (s.mapIt it.pos, s.mapIt it.vel)
-    # debugEcho &"after: {stepCnt}, state: {state}, sim: {s}"
-  return (stepCnt: stepCnt, state: state)
+  return stepCnt * 2
 #endregion
 
 when defined(test):
@@ -222,10 +217,9 @@ pos=<x= 2, y= 0, z= 4>, vel=<x= 1, y=-1, z=-1>""", &"got: {pic}"
 <x=2, y=-10, z=-7>
 <x=4, y=-8, z=8>
 <x=3, y=5, z=-1>""".toSim
-  let initialState: SimState = (ex1.mapIt it.pos, ex1.mapIt it.vel)
-  let repeat = ex1.findRepeatedState
-  doAssert repeat.stepCnt == 2772, &"got: {repeat}"
-  doAssert repeat.state == initialState, &"got: {repeat}"
+  let stepCnt = ex1.findStepsTillRepeatedState
+  doAssert stepCnt == 2772, &"got: {stepCnt}"
+  echo "ok - small system repeat stepCnt"
 
 echo "== DAY 12 =="
 echo "Part 1: Total energy after 1,000 steps"
@@ -243,5 +237,5 @@ echo "Part 2: Time to repeat"
   You might need to find a more efficient way to simulate the universe.
 ]#
 sim = readFile("input/day12.txt").toSim
-let r = sim.findRepeatedState
+let r = sim.findStepsTillRepeatedState
 echo "Repeat: ", r
