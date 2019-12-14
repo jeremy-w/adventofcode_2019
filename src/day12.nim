@@ -114,6 +114,9 @@ func step(s: var Sim) =
 func run(s: var Sim, steps: int) =
   for i in countup(1, steps):
     s.step()
+
+func findRepeatedState(s: var Sim): tuple[stepCnt: BiggestUint, state: seq[Point]] =
+  (stepCnt: 0.BiggestUint, state: s.mapIt it.pos)
 #endregion
 
 when defined(test):
@@ -195,6 +198,34 @@ pos=<x= 2, y= 0, z= 4>, vel=<x= 1, y=-1, z=-1>""", &"got: {pic}"
 
   doAssert ex1.totalEnergy == 179, &"got: {ex1.totalEnergy}"
 
+  echo "\L\LPart 2 Tests"
+  # the first example above takes 2772 steps before they exactly match a previous point in time;
+  # it eventually returns to the initial state
+  ex1 = """
+<x=-1, y=0, z=2>
+<x=2, y=-10, z=-7>
+<x=4, y=-8, z=8>
+<x=3, y=5, z=-1>""".toSim
+  let initialState = ex1.mapIt it.pos
+  let repeat = ex1.findRepeatedState
+  doAssert repeat.stepCnt == 2772, &"got: {repeat}"
+  doAssert repeat.state == initialState, &"got: {repeat}"
+
+echo "== DAY 12 =="
+echo "Part 1: Total energy after 1,000 steps"
 var sim = readFile("input/day12.txt").toSim
 sim.run(steps = 1000)
 echo "Total energy: ", sim.totalEnergy
+
+echo "Part 2: Time to repeat"
+#[
+  Determine the number of steps that must occur
+  before all of the moons' positions and velocities
+  exactly match a previous point in time.
+
+  Of course, the universe might last for a very long time before repeating.
+  You might need to find a more efficient way to simulate the universe.
+]#
+sim = readFile("input/day12.txt").toSim
+let r = sim.findRepeatedState
+echo "Repeat: ", r
