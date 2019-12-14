@@ -83,10 +83,15 @@ func turn(r: var Robot, towards: int) =
   else:
     doAssert(false, &"Invalid direction to turn: {towards}")
 
-proc makeRobot(name: string = ""): Robot =
+proc makeRobot(name: string = "", startingOnWhite: bool = false): Robot =
   let brain = makeMachine(mem = readFile("input/day11.txt").toProgram, id = name)
   var r = Robot(brain: brain, loc: (0, 0), dir: N, trail: newSeq[Mark]())
+
+  if startingOnWhite:
+    r.trail.add ((0, 0), White)
+
   r.brain.onInput = (_: Machine) => r.trail.colorAt(r.loc).Int
+
   var isColor = true # otherwise is turndir
   r.brain.onOutput = proc(i: Int, _: Machine) =
     if isColor:
