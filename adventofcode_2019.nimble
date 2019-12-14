@@ -1,3 +1,6 @@
+import os
+import sequtils
+
 # Package
 
 version = "0.1.0"
@@ -5,7 +8,16 @@ author = "Jeremy W. Sherman"
 description = "Advent of Code 2019"
 license = "BlueOak-1.0.0"
 srcDir = "src"
-bin = @["day1", "day2", "day3", "day4", "day5", "day6", "day7", "day8", "day9", "day10"]
+
+
+# walkFiles and others needing glob are not callable from Nimscript, but walkDir is!
+let dayBins = toSeq(walkDir("src", relative = true))
+  .mapIt(it.path)
+  .filterIt(it.startsWith("day") and it.endsWith(".nim"))
+  .mapIt(it.changeFileExt(""))
+# Echo does not show up, but files can be written to.
+# writeFile("foo", dayBins.join("\L"))
+bin = dayBins
 
 
 
