@@ -3,6 +3,12 @@ import strformat
 import strutils
 import sugar
 
+const
+  LogEachInstruction = false
+  LogJumps = false
+  LogInputOutput = false
+  LogLoadStores = false
+
 type
   Int* = BiggestInt
   Memory* = seq[Int]
@@ -82,13 +88,15 @@ func toInstruction*(i: Int): Instruction =
 proc store(m: Machine, index: Int, value: Int) =
   if index >= m.mem.len:
     m.mem.setLen index + 1
-  # echo &">> store[{index}] := {value}"
+  if LogLoadStores:
+    echo &">> store[{index}] := {value}"
   m.mem[index] = value
 
 proc load(m: Machine, index: Int): Int =
   if index >= m.mem.len:
     return 0
-  # echo &">> load[{index}]"
+  if LogLoadStores:
+    echo &">> load[{index}]"
   return m.mem[index]
 
 ## Runs an Intcode program.
@@ -126,7 +134,9 @@ proc run*(m: Machine) =
       else:
         -1
 
-    echo fmt"running: {instruction}: {rawParams} => {paramValues}"
+    if LogEachInstruction:
+      echo fmt"running: {instruction}: {rawParams} => {paramValues}"
+
     didJump = false
     case instruction.op
     of opAdd:
@@ -149,27 +159,34 @@ proc run*(m: Machine) =
 
     of opJumpIfTrue:
       if paramValues[0] != 0:
-        echo &"  {paramValues[0]} is non-zero: jumping to {paramValues[1]}"
+        if LogJumps:
+          echo &"  {paramValues[0]} is non-zero: jumping to {paramValues[1]}"
         m.ip = paramValues[1]
         didJump = true
       else:
-        echo &"  {paramValues[0]} not non-zero: NOT jumping to {paramValues[1]}"
+        if LogJumps:
+          echo &"  {paramValues[0]} not non-zero: NOT jumping to {paramValues[1]}"
 
     of opJumpIfFalse:
       if paramValues[0] == 0:
-        echo &"  {paramValues[0]} is zero: jumping to {paramValues[1]}"
+        if LogJumps:
+          echo &"  {paramValues[0]} is zero: jumping to {paramValues[1]}"
         m.ip = paramValues[1]
         didJump = true
       else:
-        echo &"  {paramValues[0]} is not zero: NOT jumping to {paramValues[1]}"
+        if LogJumps:
+          echo &"  {paramValues[0]} is not zero: NOT jumping to {paramValues[1]}"
 
     of opInput:
       let value = m.onInput(m)
       m.store(target, value)
-      echo &"  input received: @{target} := {value}"
+      if LogInputOutput:
+        echo &"  input received: @{target} := {value}"
 
     of opOutput:
       m.onOutput(paramValues[0], m)
+      if LogInputOutput:
+        echo &"  output sent: {paramValues[0]}"
 
     of opAdjustRelativeBase:
       m.relativeBase += paramValues[0]
