@@ -13,7 +13,7 @@ type
   Moon = ref object of RootObj
     pos: Point
     vel: Point
-  Sim = seq[Moon]
+  Sim = array[4, Moon]
 
 func toSeq(p: Point): seq[int] =
   @[p.x, p.y, p.z]
@@ -47,7 +47,8 @@ func toMoon(line: string): Moon =
   result = Moon(pos: (coords[0], coords[1], coords[2]), vel: (0, 0, 0))
 
 func toSim(text: string): Sim =
-  text.splitLines.filterIt(it.startsWith "<").mapIt it.toMoon
+  for i, m in text.splitLines.filterIt(it.startsWith "<").mapIt(it.toMoon):
+    result[i] = m
 #endregion
 
 #region Energy Measurement
@@ -95,12 +96,12 @@ func attract(m1: Moon, m2: Moon) =
     discard
 
 func applyGravity(s: var Sim) =
-  var worklist = s
-  while worklist.len > 0:
+  for i in countdown(s.high, s.low+1):
     # for each pair of moons
-    let m = worklist.pop
-    for m2 in worklist:
+    let m = s[i]
+    for j in countup(s.low, i - 1):
       # tweak velocity +/- 1 along each axis to move them closer together
+      let m2 = s[j]
       m.attract(m2)
 
 func applyVelocity(m: Moon): Moon =
