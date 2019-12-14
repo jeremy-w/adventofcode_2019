@@ -59,3 +59,18 @@ echo "-- Part 1 --"
 machine.run()
 let blockTileCount = toSeq(screen.disp.values).count(tiBlock)
 echo &"Block tiles left at halt: {blockTileCount}"
+
+echo "\n-- Part 2 --"
+# Memory address 0 represents the number of quarters that have been inserted; set it to 2 to play for free.
+
+# When three output instructions specify X=-1, Y=0, the third output instruction is not a tile; the value instead specifies the new score to show in the segment display.
+
+#[ The software reads the position of the joystick with input instructions:
+
+If the joystick is in the neutral position, provide 0.
+If the joystick is tilted to the left, provide -1.
+If the joystick is tilted to the right, provide 1. ]#
+
+# Beat the game by breaking all the blocks. What is your score after the last block is broken?
+
+echo &"Final score: ???"
