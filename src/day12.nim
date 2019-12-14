@@ -5,6 +5,10 @@ import sets
 import strformat
 import strutils
 
+# build with --profiler:on --stacktrace:on
+# hashing and stepping are killing me
+# import nimprof
+
 type
   Point = tuple[x, y, z: int]
   Moon = ref object of RootObj
