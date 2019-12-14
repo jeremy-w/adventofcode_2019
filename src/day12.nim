@@ -5,15 +5,20 @@ import strformat
 import strutils
 
 # build with --profiler:on --stacktrace:on
-# hashing and stepping are killing me
+# applyGravity, attract, and applyVelocity are now the hotspots.
+# Makes sense.
 # import nimprof
 
 type
-  Point = tuple[x, y, z: int]
+  Point = array[3, int]
   Moon = ref object of RootObj
     pos: Point
     vel: Point
   Sim = array[4, Moon]
+
+template x(p: Point): int = p[0]
+template y(p: Point): int = p[1]
+template z(p: Point): int = p[2]
 
 func toSeq(p: Point): seq[int] =
   @[p.x, p.y, p.z]
@@ -44,7 +49,7 @@ func toMoon(line: string): Moon =
     # ["-13", "14", "-7"]
     .mapIt(it.parseInt)
   # TODO: Isn't there some way to turn a seq into a tuple?
-  result = Moon(pos: (coords[0], coords[1], coords[2]), vel: (0, 0, 0))
+  result = Moon(pos: [coords[0], coords[1], coords[2]], vel: [0, 0, 0])
 
 func toSim(text: string): Sim =
   for i, m in text.splitLines.filterIt(it.startsWith "<").mapIt(it.toMoon):
@@ -125,37 +130,39 @@ func findStepsTillRepeatedState(s: var Sim): BiggestUint =
   # So find the next still point (all zero velocity), double that, and done.
   s.step
   var stepCnt = 1.BiggestUint
-  while not s.allIt(it.vel == (0, 0, 0)):
+  while not s.allIt(it.vel == [0, 0, 0]):
     s.step
     inc stepCnt
   return stepCnt * 2
 #endregion
 
 when defined(test):
-  let moon = Moon(pos: (1, 2, 3), vel: (0, 0, 0))
+  let moon = Moon(pos: [1, 2, 3], vel: [0, 0, 0])
   moon.attract(moon)
-  doAssert moon.vel == (0, 0, 0), "got: {moon}"
+  doAssert moon.vel == [0, 0, 0], "got: {moon}"
   echo "ok - attracting same makes no change"
 
-  doAssert moon.applyVelocity.pos == (1, 2, 3)
+  doAssert moon.applyVelocity.pos == [1, 2, 3]
   echo "ok - applying 0 vel does not change pos"
 
-  moon.vel = (1, 2, 3)
-  doAssert moon.applyVelocity.pos == (2, 4, 6)
+  moon.vel = [1, 2, 3]
+  doAssert moon.applyVelocity.pos == [2, 4, 6]
   echo "ok - apply velocity works"
 
-  moon.pos = (3, 0, 0)
-  moon.vel = (0, 0, 0)
-  let moon2 = Moon(pos: (5, 0, 0), vel: (0, 0, 0))
+  moon.pos = [3, 0, 0]
+  moon.vel = [0, 0, 0]
+  let moon2 = Moon(pos: [5, 0, 0], vel: [0, 0, 0])
   moon.attract(moon2)
-  doAssert moon.vel == (1, 0, 0)
-  doAssert moon2.vel == (-1, 0, 0)
+  doAssert moon.vel == [1, 0, 0]
+  doAssert moon2.vel == [-1, 0, 0]
   echo "ok - attracting two different moons works"
 
-  moon.pos = (1, 2, 3)
-  moon.vel = (-2, 0, 3)
-  doAssert moon.applyVelocity.pos == (-1, 2, 6)
+  moon.pos = [1, 2, 3]
+  moon.vel = [-2, 0, 3]
+  doAssert moon.applyVelocity.pos == [-1, 2, 6]
   echo "ok - example velocity application works"
+
+  proc mkPoint(t: tuple[x, y, z: int]): Point = [t.x, t.y, t.z]
 
   echo "testing: example 1"
   var ex1 = """
@@ -166,28 +173,28 @@ when defined(test):
   doAssert ex1.len == 4
   ex1.run(0)
   doAssert ex1.mapIt(it.pos) ==
-    @[(x: -1, y: 0, z: 2),
-    (x: 2, y: -10, z: -7),
-    (x: 4, y: -8, z: 8),
-    (x: 3, y: 5, z: -1)], &"got: {ex1}"
+    @[mkPoint((x: -1, y: 0, z: 2)),
+    mkPoint((x: 2, y: -10, z: -7)),
+    mkPoint((x: 4, y: -8, z: 8)),
+    mkPoint((x: 3, y: 5, z: -1))], &"got: {ex1}"
   doAssert ex1.mapIt(it.vel) ==
-      @[(x: 0, y: 0, z: 0),
-      (x: 0, y: 0, z: 0),
-      (x: 0, y: 0, z: 0),
-      (x: 0, y: 0, z: 0)], &"got: {ex1}"
+      @[mkPoint((x: 0, y: 0, z: 0)),
+      mkPoint((x: 0, y: 0, z: 0)),
+      mkPoint((x: 0, y: 0, z: 0)),
+      mkPoint((x: 0, y: 0, z: 0))], &"got: {ex1}"
   echo "ok - 0 steps"
 
   ex1.run(1)
   doAssert ex1.mapIt(it.vel) ==
-    @[(x: 3, y: -1, z: -1),
-    (x: 1, y: 3, z: 3),
-    (x: -3, y: 1, z: -3),
-    (x: -1, y: -3, z: 1)], &"got: {ex1}"
+    @[mkPoint((x: 3, y: -1, z: -1)),
+    mkPoint((x: 1, y: 3, z: 3)),
+    mkPoint((x: -3, y: 1, z: -3)),
+    mkPoint((x: -1, y: -3, z: 1))], &"got: {ex1}"
   doAssert ex1.mapIt(it.pos) ==
-      @[(x: 2, y: -1, z: 1),
-      (x: 3, y: -7, z: -4),
-      (x: 1, y: -7, z: 5),
-      (x: 2, y: 2, z: 0)], &"got: {ex1}"
+      @[mkPoint((x: 2, y: -1, z: 1)),
+      mkPoint((x: 3, y: -7, z: -4)),
+      mkPoint((x: 1, y: -7, z: 5)),
+      mkPoint((x: 2, y: 2, z: 0))], &"got: {ex1}"
   echo "ok - 1 step"
 
   ex1.run(1)
