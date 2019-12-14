@@ -107,3 +107,4 @@ var r = makeRobot("Robi")
 r.brain.run()
 let part1Answer = r.trail.uniqueLocations
 echo "Part 1: Panels painted at least once: ", part1Answer
+doAssert part1Answer == 2211
