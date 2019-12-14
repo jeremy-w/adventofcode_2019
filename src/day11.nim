@@ -7,6 +7,7 @@ import intcode_machine_v2
 import sequtils
 import sets
 import strformat
+import strutils
 import sugar
 
 # Inputs to the program
@@ -113,3 +114,30 @@ r.brain.run()
 let part1Answer = r.trail.uniqueLocations
 echo "Part 1: Panels painted at least once: ", part1Answer
 doAssert part1Answer == 2211
+
+# Part 2
+# a valid registration identifier is always eight capital letters.
+# After starting the robot on a single white panel instead, what registration identifier does it paint on your hull?
+
+proc asciiArtLines(trail: seq[Mark]): seq[string] =
+  let pointSet = trail.mapIt(it.point).toHashSet
+  let xs = pointSet.mapIt(it.x)
+  let ys = pointSet.mapIt(it.y)
+  let minX = xs.min
+  let minY = ys.min
+  let width = xs.max - minX + 1
+  let height = ys.max - minY + 1
+  const
+    BlackMark = ' '
+    WhiteMark = '@'
+  result = sequtils.repeat(BlackMark.repeat(width), height)
+  for mark in trail:
+    let row = mark.point.y - minY
+    let col = mark.point.x - minX
+    result[row][col] = case mark.color
+      of Black: BlackMark
+      else: WhiteMark
+
+var r2 = makeRobot("R2", startingOnWhite = true)
+r2.brain.run()
+echo r2.trail.asciiArtLines.join("\L")
