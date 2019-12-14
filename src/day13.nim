@@ -48,7 +48,10 @@ func output(s: Screen, i: Int) =
     s.accu.r = i
     s.next = toId
   of toId:
-    s.disp[s.accu] = i.TileId
+    if s.accu == (-1.Int, 0.Int):
+      s.score = i
+    else:
+      s.disp[s.accu] = i.TileId
     s.next = toCol
 
 var machine = makeMachine(
