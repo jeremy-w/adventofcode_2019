@@ -128,12 +128,63 @@ func run(s: var Sim, steps: int) =
 func findStepsTillRepeatedState(s: var Sim): BiggestUint =
   # Internet points out that this reaches a still point then runs backwards.
   # So find the next still point (all zero velocity), double that, and done.
+  # We can also just run each axis independently, then find the least-common-multiple.
   s.step
   var stepCnt = 1.BiggestUint
   while not s.allIt(it.vel == [0, 0, 0]):
     s.step
     inc stepCnt
   return stepCnt * 2
+
+func findStepsTillRepeatedStateForComponent(s: var Sim, c: int): BiggestUint =
+  var pos: array[4, int]
+  var vel: array[4, int]
+  for i, m in s:
+    pos[i] = m.pos[c]
+    vel[i] = m.vel[c]
+
+  func applyGravity() =
+    for i in countdown(s.high, s.low+1):
+      # for each pair of moons
+      let mi = pos[i]
+      for j in countup(s.low, i - 1):
+        # tweak velocity +/- 1 along each axis to move them closer together
+        let mj = pos[j]
+        # Apply attraction
+        if mi < mj:
+          vel[i] += 1
+          vel[j] -= 1
+        elif mj < mi:
+          vel[j] += 1
+          vel[i] -= 1
+        else:
+          continue
+
+  func applyVelocity() =
+    for i, v in vel:
+      pos[i] += v
+
+  func mstep() =
+    applyGravity()
+    applyVelocity()
+
+  var stepCnt = 1.BiggestUint
+  mstep()
+  let target = repeat(0, 4)
+  while vel != target:
+    mstep()
+    inc stepCnt
+  return stepCnt * 2
+
+
+func altFindSteps(s: var Sim): BiggestUint =
+  var x = findStepsTillRepeatedStateForComponent(s, 0)
+  debugEcho "steps for x: ", x
+  var y = findStepsTillRepeatedStateForComponent(s, 1)
+  debugEcho "steps for y: ", y
+  var z = findStepsTillRepeatedStateForComponent(s, 2)
+  debugEcho "steps for z: ", z
+  return x.lcm(y).lcm(z)
 #endregion
 
 when defined(test):
@@ -225,7 +276,7 @@ pos=<x= 2, y= 0, z= 4>, vel=<x= 1, y=-1, z=-1>""", &"got: {pic}"
 <x=2, y=-10, z=-7>
 <x=4, y=-8, z=8>
 <x=3, y=5, z=-1>""".toSim
-  let stepCnt = ex1.findStepsTillRepeatedState
+  let stepCnt = ex1.altFindSteps
   doAssert stepCnt == 2772, &"got: {stepCnt}"
   echo "ok - small system repeat stepCnt"
 
@@ -245,5 +296,5 @@ echo "Part 2: Time to repeat"
   You might need to find a more efficient way to simulate the universe.
 ]#
 sim = readFile("input/day12.txt").toSim
-let r = sim.findStepsTillRepeatedState
+let r = sim.altFindSteps
 echo "Repeat: ", r
