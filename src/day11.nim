@@ -31,7 +31,7 @@ type
     point: Point
     color: Color
 
-  Robot = tuple
+  Robot = ref object of RootObj
     brain: Machine
     loc: Point
     dir: Dir
@@ -85,7 +85,7 @@ func turn(r: var Robot, towards: int) =
 
 proc makeRobot(name: string = ""): Robot =
   let brain = makeMachine(mem = readFile("input/day11.txt").toProgram, id = name)
-  var r = (brain: brain, loc: (0, 0), dir: N, trail: newSeq[Mark]())
+  var r = Robot(brain: brain, loc: (0, 0), dir: N, trail: newSeq[Mark]())
   r.brain.onInput = (_: Machine) => r.trail.colorAt(r.loc).Int
   r.brain.onOutput = (i: Int, _: Machine) => r.trail.add (r.loc, i.int)
   return r
