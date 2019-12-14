@@ -33,6 +33,7 @@ type
   Screen = ref object of RootObj
     disp: Table[tuple[c, r: Int], TileId]
     next: TileOutput
+    score: Int
     accu: tuple[c, r: Int]
 
 const prog = readFile("input/day13.txt").toProgram
@@ -62,6 +63,9 @@ echo &"Block tiles left at halt: {blockTileCount}"
 
 echo "\n-- Part 2 --"
 # Memory address 0 represents the number of quarters that have been inserted; set it to 2 to play for free.
+
+var playableProg = prog
+playableProg[0] = 2.Int
 
 # When three output instructions specify X=-1, Y=0, the third output instruction is not a tile; the value instead specifies the new score to show in the segment display.
 
