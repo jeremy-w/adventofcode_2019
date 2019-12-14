@@ -11,8 +11,51 @@ For example, a sequence of output values like 1,2,3,6,5,4 would draw a horizonta
 
 Start the game. How many block tiles are on the screen when the game exits?
 ]#
+import intcode_machine_v2
+import sequtils
+import strformat
+import sugar
+import tables
 
+type
+  TileOutput = enum
+    toCol
+    toRow
+    toId
+
+  TileId = enum
+    tiEmpty
+    tiWall
+    tiBlock
+    tiPaddle
+    tiBall
+
+  Screen = ref object of RootObj
+    disp: Table[tuple[c, r: Int], TileId]
+    next: TileOutput
+    accu: tuple[c, r: Int]
+
+const prog = readFile("input/day13.txt").toProgram
+
+var screen = Screen()
+func output(s: Screen, i: Int) =
+  case s.next
+  of toCol:
+    s.accu.c = i
+    s.next = toRow
+  of toRow:
+    s.accu.r = i
+    s.next = toId
+  of toId:
+    s.disp[s.accu] = i.TileId
+    s.next = toCol
+
+var machine = makeMachine(
+  mem = prog,
+  onOutput = (i: Int, m: Machine) => screen.output(i))
 
 echo "== Day 13 =="
 echo "-- Part 1 --"
-echo "Block tiles left at halt: TODO: ???"
+machine.run()
+let blockTileCount = toSeq(screen.disp.values).count(tiBlock)
+echo &"Block tiles left at halt: {blockTileCount}"
