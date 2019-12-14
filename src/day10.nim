@@ -174,9 +174,15 @@ when defined(test):
   doAssert destroyed[0] == (col: 11, row: 12).Pt, &"got: {destroyed[0]}"
   doAssert destroyed[1] == (col: 12, row: 1).Pt, &"got: {destroyed[1]}"
   doAssert destroyed[2] == (col: 12, row: 2).Pt, &"got: {destroyed[2]}"
-  doAssert destroyed[10] == (col: 12, row: 8).Pt, &"got: {destroyed[10]}"
-  doAssert destroyed[20] == (col: 16, row: 0).Pt, &"got: {destroyed[20]}"
-  doAssert destroyed[200] == (col: 8, row: 2).Pt, &"got: {destroyed[200]}"
+  doAssert destroyed[9] == (col: 12, row: 8).Pt, &"got: {destroyed[9]}"
+  doAssert destroyed[19] == (col: 16, row: 0).Pt, &"got: {destroyed[19]}"
+  doAssert destroyed[49] == (col: 16, row: 9).Pt, &"got: {destroyed[49]}"
+  doAssert destroyed[99] == (col: 10, row: 16).Pt, &"got: {destroyed[99]}"
+  doAssert destroyed[198] == (col: 9, row: 6).Pt, &"got: {destroyed[198]}"
+  doAssert destroyed[199] == (col: 8, row: 2).Pt, &"got: {destroyed[199]}"
+  doAssert destroyed[200] == (col: 10, row: 9).Pt, &"got: {destroyed[200]}"
+  doAssert destroyed[298] == (col: 11, row: 1).Pt, &"got: {destroyed[298]}"
+
 
 var text = readFile("input/day10.txt")
 text.stripLineEnd
