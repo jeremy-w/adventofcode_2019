@@ -91,11 +91,13 @@ func attract(m1: Moon, m2: Moon) =
     discard
 
 func applyGravity(s: var Sim) =
-  # for each pair of moons
-  for left in s:
-    for right in s:
+  var worklist = s
+  while worklist.len > 0:
+    # for each pair of moons
+    let m = worklist.pop
+    for m2 in worklist:
       # tweak velocity +/- 1 along each axis to move them closer together
-      left.attract(right)
+      m.attract(m2)
 
 func applyVelocity(m: Moon): Moon =
   # TODO: How to generalize this? It's the same operation applied across a pair of matching components.
@@ -159,17 +161,18 @@ when defined(test):
       (x: 0, y: 0, z: 0),
       (x: 0, y: 0, z: 0)], &"got: {ex1}"
   echo "ok - 0 steps"
+
   ex1.run(1)
+  doAssert ex1.mapIt(it.vel) ==
+    @[(x: 3, y: -1, z: -1),
+    (x: 1, y: 3, z: 3),
+    (x: -3, y: 1, z: -3),
+    (x: -1, y: -3, z: 1)], &"got: {ex1}"
   doAssert ex1.mapIt(it.pos) ==
       @[(x: 2, y: -1, z: 1),
       (x: 3, y: -7, z: -4),
       (x: 1, y: -7, z: 5),
       (x: 2, y: 2, z: 0)], &"got: {ex1}"
-  doAssert ex1.mapIt(it.vel) ==
-      @[(x: 3, y: -1, z: -1),
-      (x: 1, y: 3, z: 3),
-      (x: -3, y: 1, z: -3),
-      (x: -1, y: -3, z: 1)], &"got: {ex1}"
   echo "ok - 1 step"
 
 var sim = readFile("input/day12.txt").toSim
