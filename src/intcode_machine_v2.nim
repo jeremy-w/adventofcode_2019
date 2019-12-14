@@ -37,12 +37,12 @@ type
     params: seq[ParamMode]
 
   Machine* = ref object of RootObj
-    id: string
+    id*: string
     ip: Int
     relativeBase: Int
     mem: Memory
-    onInput: (Machine) -> Int
-    onOutput: (Int, Machine) -> void
+    onInput*: (Machine) -> Int
+    onOutput*: (Int, Machine) -> void
 
 proc defaultOnInput(m: Machine): Int = 0
 proc defaultOnOutput(i: Int, m: Machine) = echo &"OUTPUT: {i} from {m.id}"
