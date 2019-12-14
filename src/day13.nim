@@ -78,6 +78,12 @@ If the joystick is in the neutral position, provide 0.
 If the joystick is tilted to the left, provide -1.
 If the joystick is tilted to the right, provide 1. ]#
 
+type
+  JoystickPos = enum
+    jpLeft = -1.Int
+    jpNeutral
+    jpRight  
+
 # Beat the game by breaking all the blocks. What is your score after the last block is broken?
 
 echo &"Final score: ???"
