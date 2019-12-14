@@ -54,7 +54,7 @@ func kineticEnergy(m: Moon): int =
   m.vel.x.abs + m.vel.y.abs + m.vel.z.abs
 
 func totalEnergy(m: Moon): int =
-  m.potentialEnergy + m.kineticEnergy
+  m.potentialEnergy * m.kineticEnergy
 
 func totalEnergy(s: Sim): int =
   s.mapIt(it.totalEnergy).sum
@@ -174,6 +174,26 @@ when defined(test):
       (x: 1, y: -7, z: 5),
       (x: 2, y: 2, z: 0)], &"got: {ex1}"
   echo "ok - 1 step"
+
+  ex1.run(1)
+  var pic = ex1.join("\L")
+  doAssert pic == """
+pos=<x= 5, y=-3, z=-1>, vel=<x= 3, y=-2, z=-2>
+pos=<x= 1, y=-2, z= 2>, vel=<x=-2, y= 5, z= 6>
+pos=<x= 1, y=-4, z=-1>, vel=<x= 0, y= 3, z=-6>
+pos=<x= 1, y=-4, z= 2>, vel=<x=-1, y=-6, z= 2>""", &"got: {pic}"
+  echo "ok - 2 steps"
+
+  ex1.run(8)
+  pic = ex1.join("\L")
+  doAssert pic == """
+pos=<x= 2, y= 1, z=-3>, vel=<x=-3, y=-2, z= 1>
+pos=<x= 1, y=-8, z= 0>, vel=<x=-1, y= 1, z= 3>
+pos=<x= 3, y=-6, z= 1>, vel=<x= 3, y= 2, z=-3>
+pos=<x= 2, y= 0, z= 4>, vel=<x= 1, y=-1, z=-1>""", &"got: {pic}"
+  echo "ok - 10 steps"
+
+  doAssert ex1.totalEnergy == 179, &"got: {ex1.totalEnergy}"
 
 var sim = readFile("input/day12.txt").toSim
 sim.run(steps = 1000)
