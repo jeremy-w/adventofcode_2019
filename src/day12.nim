@@ -115,6 +115,31 @@ func run(s: var Sim, steps: int) =
 #endregion
 
 when defined(test):
+  let moon = Moon(pos: (1, 2, 3), vel: (0, 0, 0))
+  moon.attract(moon)
+  doAssert moon.vel == (0, 0, 0), "got: {moon}"
+  echo "ok - attracting same makes no change"
+
+  doAssert moon.applyVelocity.pos == (1, 2, 3)
+  echo "ok - applying 0 vel does not change pos"
+
+  moon.vel = (1, 2, 3)
+  doAssert moon.applyVelocity.pos == (2, 4, 6)
+  echo "ok - apply velocity works"
+
+  moon.pos = (3, 0, 0)
+  moon.vel = (0, 0, 0)
+  let moon2 = Moon(pos: (5, 0, 0), vel: (0, 0, 0))
+  moon.attract(moon2)
+  doAssert moon.vel == (1, 0, 0)
+  doAssert moon2.vel == (-1, 0, 0)
+  echo "ok - attracting two different moons works"
+
+  moon.pos = (1, 2, 3)
+  moon.vel = (-2, 0, 3)
+  doAssert moon.applyVelocity.pos == (-1, 2, 6)
+  echo "ok - example velocity application works"
+
   echo "testing: example 1"
   var ex1 = """
 <x=-1, y=0, z=2>
