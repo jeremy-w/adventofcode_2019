@@ -41,11 +41,9 @@ type
 
 func colorAt(trail: seq[Mark], point: Point): Color =
   result = InitialColor
-  var i = high(trail)
-  while i >= low(trail):
+  for i in trail.high.countdown trail.low:
     if trail[i].point == point:
       return trail[i].color
-    dec i
 
 func paint(r: var Robot, color: Color) =
   r.trail.add (r.loc, color)
