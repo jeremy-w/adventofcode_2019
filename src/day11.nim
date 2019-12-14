@@ -65,8 +65,8 @@ func rightDir(dir: Dir): Dir =
 
 func delta(dir: Dir): Point =
   case dir
-  of N: (x: 0, y: 1)
-  of S: (x: 0, y: -1)
+  of N: (x: 0, y: -1)
+  of S: (x: 0, y: +1)
   of E: (x: 1, y: 0)
   of W: (x: -1, y: 0)
 
