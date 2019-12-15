@@ -64,11 +64,33 @@ machine.run()
 let blockTileCount = toSeq(screen.disp.values).count(tiBlock)
 echo &"Block tiles left at halt: {blockTileCount}"
 
+let ballTileCount = toSeq(screen.disp.values).count(tiBall)
+let paddleTileCount = toSeq(screen.disp.values).count(tiPaddle)
+let wallTileCount = toSeq(screen.disp.values).count(tiWall)
+echo &"ball {ballTileCount}, paddle {paddleTileCount}, wall {wallTileCount}"
+var minP = (c: 99.Int, r: 99.Int)
+var maxP = (c: -99.Int, r: -99.Int)
+for (c, r) in screen.disp.keys:
+  minP.c = min(minP.c, c)
+  minP.r = min(minP.r, r)
+  maxP.c = max(maxP.c, c)
+  maxP.r = max(maxP.r, r)
+echo &"grid from {minP} to {maxP}"
+
+#[
+Block tiles left at halt: 242
+ball 1, paddle 1, wall 80
+grid from (c: 0, r: 0) to (c: 39, r: 20)
+]#
+
+
 echo "\n-- Part 2 --"
 # Memory address 0 represents the number of quarters that have been inserted; set it to 2 to play for free.
 
 var playableProg = prog
 playableProg[0] = 2.Int
+
+# echo playableProg.toPrettyProgram
 
 # When three output instructions specify X=-1, Y=0, the third output instruction is not a tile; the value instead specifies the new score to show in the segment display.
 
@@ -82,7 +104,7 @@ type
   JoystickPos = enum
     jpLeft = -1.Int
     jpNeutral
-    jpRight  
+    jpRight
 
 # Beat the game by breaking all the blocks. What is your score after the last block is broken?
 

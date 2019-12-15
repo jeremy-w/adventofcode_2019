@@ -31,3 +31,8 @@ Let's go with [Nim](https://nim-lang.org/) this year.
   choosenim-init: Place the following line in the ~/.profile or ~/.bashrc file.
   choosenim-init:     export PATH=/Users/jeremy/.nimble/bin:$PATH
   ```
+
+## Handy Tools
+- Intcode Disassembler: https://janiczek.github.io/advent-of-code/Year2019/Intcode/Disasm/?force_refresh=1
+  - I also have a toPrettyProgram of my own, but I can use the online one from my phone.
+  - Strike that - it seems to not notice when I paste in a program in Mobile Safari, and has no other UI to trigger it to run.
