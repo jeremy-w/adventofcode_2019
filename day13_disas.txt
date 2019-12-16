@@ -20,7 +20,7 @@ RESET COL:
 WRITE_TILE_ID:
 ; Table lookup - R0 is return address, R1 and R2 args col & row.
 ; Tile ID is returned in R1.
-; CALL_578(r1 = @382 COL, r2 = @383 ROW)
+; CALL_578_TILE_AT(r1 = @382 COL, r2 = @383 ROW)
 22: mul #1 @382 R1
 26: mul #1 @383 R2
 30: mul #1 #37 R0
@@ -38,140 +38,176 @@ WRITE_TILE_ID:
 ; Check if last row.
 58: lt? @383 #21 @381
 62: bnz @381 #18 RESET_COL
+; In Part 1, this is set to 0+1 == 1, so we hlt.
+; In Part 2, we change it to 0*1 == 0, so we jump.
 65: brz @385 #69 OUTPUT_SCORE
 
 68: hlt
 
 OUTPUT_SCORE:
-69: out #-1
-71: out #0
-; VAR: @386 is the SCORE.
-73: out @386
+    69: out #-1
+    71: out #0
+    ; VAR: @386(SCORE) is the SCORE.
+    73: out @386(SCORE)
 
 ; This is the start of the core game loop.
 READ_MOVE:
-; It reads in. <0 is left, >0 is right.
-; If already leftmost/righmost, ignore move in that direction.
-; Otherwise, force to -1/+1.
-; VAR: @384 in JOYSTICK_INPUT
-75: inp @384
-77: lt? @384 #0 @381
-81: bnz @381 #94 HANDLE_LEFT
+    ; It reads in. <0 is left, >0 is right.
+    ; If already leftmost/righmost, ignore move in that direction.
+    ; Otherwise, force to -1/+1.
+    ; VAR: @384(JOYSTICK_INPUT) in JOYSTICK_INPUT
+    75: inp @384(JOYSTICK_INPUT)
+    77: lt? @384(JOYSTICK_INPUT) #0 @381
+    81: bnz @381 #94 HANDLE_LEFT
 
-84: lt? #0 @384 @381
-88: bnz @381 #108 HANDLE_RIGHT
+    84: lt? #0 @384(JOYSTICK_INPUT) @381
+    88: bnz @381 #108 HANDLE_RIGHT
 
-91: bnz #1 #161 JOYSTICK_DONE
+    91: bnz #1 #161 JOYSTICK_DONE
 
-HANDLE_LEFT:
-; VAR: @392 is PADDLE_COL
-94: lt? #1 @392 @381
-; already at 0, leftmost pos
-98: brz @381 #161 JOYSTICK_DONE
-101: add #-1 #0 @384
-105: brz #0 #119
+    HANDLE_LEFT:
+    ; VAR: @392(PADDLE_COL) is PADDLE_COL
+    94: lt? #1 @392(PADDLE_COL) @381
+    ; already at 0, leftmost pos
+    98: brz @381 #161 JOYSTICK_DONE
+    101: add #-1 #0 @384(JOYSTICK_INPUT)
+    105: brz #0 #119
 
-HANDLE_RIGHT:
-108: lt? @392 #38 @381
-; already rightmost at 38
-112: brz @381 #161 JOYSTICK_DONE
-115: add #1 #0 @384
+    HANDLE_RIGHT:
+    108: lt? @392(PADDLE_COL) #38 @381
+    ; already rightmost at 38
+    112: brz @381 #161 JOYSTICK_DONE
+    115: add #1 #0 @384(JOYSTICK_INPUT)
 
 MOVE_PADDLE:
-119: mul #1 @392 R1
-123: mul #19 #1 R2
-127: mul #1 #0 R3
-131: add #0 #138 R0
-; CALL_549(@392, 19, 1)
-135: bnz #1 #549
+    ; Draw BLANK at old pos.
+    ; CALL_549(@392(PADDLE_COL), 19, 0)
+    119: mul #1 @392(PADDLE_COL) R1
+    123: mul #19 #1 R2
+    127: mul #1 #0 R3
+    131: add #0 #138 R0
+    135: bnz #1 #549
 
-; This actually updates the paddle position.
-; I don't know what the call is for.
-138: add @392 @384 @392
+    ; This actually updates the paddle position.
+    138: add @392(PADDLE_COL) @384(JOYSTICK_INPUT) @392(PADDLE_COL)
 
-; CALL_549(#161, @392, #19, #3)
-142: add @392 #0 R1
-146: mul #19 #1 R2
-150: add #3 #0 R3
-154: add #161 #0 R0
-158: brz #0 #549
+    ; Draw PADDLE at new pos.
+    ; CALL_549(#161, @392(PADDLE_COL), #19, #3)
+    142: add @392(PADDLE_COL) #0 R1
+    146: mul #19 #1 R2
+    150: add #3 #0 R3
+    154: add #161 #0 R0
+    158: brz #0 #549
 
+;; BALL MOTION
+;; Joystick input now serves as a "did bounce" mark, in which case,
+;; the ball gets to move again before the paddle.
 ; Clear joystick input.
-161: mul #0 #1 @384
+161: mul #0 #1 @384(JOYSTICK_INPUT)
 
-; CALL_578(@388+@390, @389_BALL_POS)
-165: add @388 @390 R1
-169: add @389 #0 R2  ; BALL_POS
+; CALL_578_TILE_AT(@388(BALL_COL)+@390(BALL_COL_DELTA), @389(BALL_ROW))
+165: add @388(BALL_COL) @390(BALL_COL_DELTA) R1
+169: add @389(BALL_ROW) #0 R2  ; BALL_POS
 173: add #0 #180 R0
 177: brz #0 #578
 
-; Some sort of CASE analysis here: 0, 2, other. Probably 1.
-; Maybe the tile that is going to be hit?
-180: brz R1 #213 WHEN_0
-183: eq? R1 #2 @381
-187: brz @381 #205 WHEN_2
+180: brz R1 #213 WHEN_0_AKA_EMPTY
+183: eq? R1 #2 @381  ; check if block
+187: brz @381 #205 WHEN_NOT_BLOCK
 
-; CALL_393(@388+@390, @389_BALL_POS)
-190: add @388 @390 R1
-194: add @389 #0 R2  ; BALL_POS
+HANDLE_COLLISION_WITH_BLOCK:
+; CALL_393(@388(BALL_COL)+@390(BALL_COL_DELTA), @389(BALL_ROW))
+190: add @388(BALL_COL) @390(BALL_COL_DELTA) R1
+194: add @389(BALL_ROW) #0 R2  ; BALL_POS
 198: add #205 #0 R0
 202: bnz #1 #393
 
-WHEN_2:
-205: mul @390 #-1 @390  ; BALL_POS *= -1
-209: mul #1 #1 @384  ; Set joystick to right?
+WHEN_not block collision:
+; Must have bounced off ceiling or paddle. Flip col dir, but keep row dir.
+; This visually is a straight bounce off the paddle,
+; vs a bounce off its edge, e.g. left to right:
+;    O O
+;     O
+;     -
+205: mul @390(BALL_COL_DELTA) #-1 @390(BALL_COL_DELTA)  ; BALL_COL_DELTA *= -1
+209: mul #1 #1 @384(JOYSTICK_INPUT)  ; Set joystick to right?
 
-WHEN_0:
-; CALL_578(@388, @389+@391)
-213: add #0 @388 R1
-217: add @389 @391 R2
+WHEN_0_AKA_EMPTY:
+; CALL_578_TILE_AT(@388(BALL_COL), @389(BALL_ROW)+@391(BALL_ROW_DELTA))
+213: add #0 @388(BALL_COL) R1
+217: add @389(BALL_ROW) @391(BALL_ROW_DELTA) R2
 221: add #0 #228 R0
 225: bnz #1 #578
 
 228: brz R1 #261
+
 231: eq? R1 #2 @381
 235: brz @381 #253
-238: add @388 #0 R1
-242: add @389 @391 R2
+
+238: add @388(BALL_COL) #0 R1
+242: add @389(BALL_ROW) @391(BALL_ROW_DELTA) R2
 246: add #0 #253 R0
 250: brz #0 #393
-253: mul @391 #-1 @391
-257: mul #1 #1 @384
-261: bnz @384 #161
+253: mul @391(BALL_ROW_DELTA) #-1 @391(BALL_ROW_DELTA)
+257: mul #1 #1 @384(JOYSTICK_INPUT)
+261: bnz @384(JOYSTICK_INPUT) #161
 
-264: add @388 @390 R1
-268: add @389 @391 R2
+; CALL_578_TILE_AT(@388(BALL_COL)+@390(BALL_COL_DELTA), @389(BALL_ROW)+@391(BALL_ROW_DELTA))
+264: add @388(BALL_COL) @390(BALL_COL_DELTA) R1
+268: add @389(BALL_ROW) @391(BALL_ROW_DELTA) R2
 272: add #0 #279 R0
 276: brz #0 #578
 
-279: brz R1 #316
-282: eq? R1 #2 @381
+279: brz R1 #316  ; EMPTY
+
+282: eq? R1 #2 @381  ; block
 286: brz @381 #304
-289: add @388 @390 R1
-293: add @389 @391 R2
+
+; Block collision! here both col & row delta are used, not just col.
+289: add @388(BALL_COL) @390(BALL_COL_DELTA) R1
+293: add @389(BALL_ROW) @391(BALL_ROW_DELTA) R2
 297: mul #1 #304 R0
 301: bnz #1 #393
 
-304: mul @390 #-1 @390
-308: mul @391 #-1 @391
-312: mul #1 #1 @384
-316: bnz @384 #161
+HANDLE_WALL_ROW:
+; flip both row and col direction
+; this is an edge hit, and the ball starts retracing its steps:
+;
+;    O
+;     O
+;      -
+;
+; So we look for a ball going right and down at:
+;
+;  O
+;  **
+304: mul @390(BALL_COL_DELTA) #-1 @390(BALL_COL_DELTA)
+308: mul @391(BALL_ROW_DELTA) #-1 @391(BALL_ROW_DELTA)
+312: mul #1 #1 @384(JOYSTICK_INPUT)
 
-319: mul @388 #1 R1
-323: mul @389 #1 R2
+HANDLE_EMPTY_ROW:
+316: bnz @384(JOYSTICK_INPUT) #161  ; move again if bounced
+
+; Write empty tile at curr col/row. The ball disappears!
+319: mul @388(BALL_COL) #1 R1
+323: mul @389(BALL_ROW) #1 R2
 327: add #0 #0 R3
 331: mul #338 #1 R0
 335: brz #0 #549
-338: add @388 @390 @388
-342: add @389 @391 @389
-346: add #0 @388 R1
-350: add @389 #0 R2
+
+; Update col/row
+338: add @388(BALL_COL) @390(BALL_COL_DELTA) @388(BALL_COL)
+342: add @389(BALL_ROW) @391(BALL_ROW_DELTA) @389(BALL_ROW)
+
+; Write ball tile at new col/row. The ball reappears!
+346: add #0 @388(BALL_COL) R1
+350: add @389(BALL_ROW) #0 R2
 354: mul #1 #4 R3
 358: mul #1 #365 R0
 362: brz #0 #549
-; VAR: @389 is BALL_ROW. Once >= row 20, game over!
-365: lt? @389 #20 @381
-369: bnz @381 #75
+; VAR: @389(BALL_ROW) is BALL_ROW. Once >= row 20, game over!
+365: lt? @389(BALL_ROW) #20 @381
+369: bnz @381 #75  ; get next move
 
 ; Game Over: Output a score of 0 and halt.
 372: out #-1
@@ -183,24 +219,33 @@ WHEN_0:
 ; suggested by: rg -o '@3\d{2}' day13_disas.txt | cut -c2- | sort -un | less
 ; after noting several in this range.
 ; plus 393 is a popular jump target - 3 callers.
-379: .data 0
-380: add @0 @0 @0
-384: .data 0
-385: .data 0
-386: .data 0
-387: 42 (invalid data!)
-388: 18 (invalid data!)
-389: 16 (invalid data!)
-390: add @1 @20 @109
-394: inp @21202
-396: .data -2
-397: add @1 @21202 @-1
-401: add @2 @21102 @1
-405: .data 0
-406: inp @21102
-408: 14 (invalid data!)
-409: add @0 @1106 @0
-413: 49 (invalid data!)
+379: .data 0  ; VAR: ADDed/MULed (p1/p2)...
+380: .data 1  ; VAR: ...into 385 to decide whether to run or just draw and exit.
+381: .data 0  ; VAR: RESULT -- generally used as part of like LT? x, y, @381; BRZ @381
+382: .data 0  ; VAR: COL -- for initial draw only
+383: .data 0  ; VAR: ROW  -- for initial draw only
+384: .data 0  ; VAR: JOYSTICK_INPUT
+385: .data 0  ; VAR: SHOULD_CONTINUE_PAST_INITAL_DISPLAY
+386: .data 0  ; VAR: SCORE
+387: .data 242  ; VAR: BLOCK_COUNT
+388: .data 18  ; VAR: BALL_COL
+389: .data 16  ; VAR: BALL_ROW
+390: .data 1  ; VAR: BALL_COL_DELTA
+391: .data 1  ; VAR: BALL_ROW_DELTA
+392: .data 20  ; VAR: PADDLE_COL
+
+; 393_COLLIDE(R-3=retaddr, R-2=COL, R-1=ROW)
+393: rba #3
+
+; Destroy the block!
+; call WRITE_TILE_CONTENTS(COL, ROW, 0=EMPTY)
+395: mul R-2 #1 R1
+399: mul R-1 #1 R2
+403: mul #1 #0 R3
+407: mul #414 #1 R0
+411: brz #0 #549
+
+; POINTS = CALL_601(COL, ROW)
 414: add #0 R-2 R1
 418: add #0 R-1 R2
 422: add #429 #0 R0
@@ -208,19 +253,26 @@ WHEN_0:
 
 ; Increase score by R1
 429: add #0 R1 @435
-433: add @386 @0_COMPUTED @386
+433: add @386(SCORE) @0_COMPUTED @386(SCORE)
+
 ; Write updated score
 437: out #-1
 439: out #0
-441: out @386
-; VAR: @387 looks to be Block Count?
+441: out @386(SCORE)
+
+; VAR: @387(BLOCK_COUNT) looks to be Block Count?
 ; Reduce block count by one.
-443: add @387 #-1 @387
-447: bnz @387 #451
+443: add @387(BLOCK_COUNT) #-1 @387(BLOCK_COUNT)
+447: bnz @387(BLOCK_COUNT) #451
 450: hlt
 451: rba #-3
 453: bnz #1 R0
 
+; called from the 601 point computation
+; 456_???(21*COL + ROW -4, #431 -3, #286 -2, #840 -1)
+; but written to expect 7 args
+; so basically looking into caller's stackframe of:
+;  RETADDR, COL -7, ROW -6, RETADDR -5
 456: rba #8
 458: mul R-7 R-6 R-3
 462: add R-3 R-5 R-3
@@ -229,9 +281,11 @@ WHEN_0:
 474: bnz @381 #492
 
 477: mul R-2 #-1 R-1
+
 481: add R-3 R-1 R-3
 485: lt? R-3 R-2 @381
 489: brz @381 #481
+
 492: mul R-4 #8 R-2
 496: lt? R-3 R-2 @381
 500: bnz @381 #518
@@ -271,8 +325,7 @@ WHEN_0:
 
 
 FROM_MANY:
-; DISPATCH TABLE?
-; TILE_AT(r1 = COL, r2 = ROW)
+; PROC TILE_AT(r1 = COL, r2 = ROW)
 578: rba #3
 ; Now r1 is r-2, r2 is r-1
 ; IDX = 40*ROW + COL
@@ -280,37 +333,71 @@ FROM_MANY:
 584: add R-2 @593 @593
 588: add #639 @593 @593
 ; RETURN #639 + IDX
-592: mul @0 #1 R-2
+592: mul @0_COMPUTED #1 R-2
 596: rba #-3
 598: bnz #1 R0
 
+; CALL_601_POINTS_AT(COL, ROW)
 601: rba #3
-603: mul #21 R-2 R1
-607: add R1 R-1 R1
+603: mul #21 R-2 R1  ; Huh, column-major?
+607: add R1 R-1 R1  ; R1 = 21*COL + ROW
 611: mul #431 #1 R2
 615: mul #286 #1 R3
 619: mul #840 #1 R4
+; CALL_456(21*COL + ROW, #431, #286, #840)
 623: add #0 #630 R0
 627: bnz #1 #456
 
+; Return 1479 + R1
 630: add R1 #1479 R-2
 634: rba #-3
 636: brz #0 R0
 
 # VAR: TILE ID TABLE: 639 through 1479. 40*ROW + COL
-# Row 0: a lot of wall
-639: add @1 @1 @1
-643: add @1 @1 @1
-647: add @1 @1 @1
-651: add @1 @1 @1
-655: add @1 @1 @1
-659: add @1 @1 @1
-663: add @1 @1 @1
-667: add @1 @1 @1
-671: add @1 @1 @1
-675: add @1 @1 @1
-; Row 1: wall, empty, wall
-679: add @0 @0 @0
+639: .data 1
+640: .data 1
+641: .data 1
+642: .data 1
+643: .data 1
+644: .data 1
+645: .data 1
+646: .data 1
+647: .data 1
+648: .data 1
+649: .data 1
+650: .data 1
+651: .data 1
+652: .data 1
+653: .data 1
+654: .data 1
+655: .data 1
+656: .data 1
+657: .data 1
+658: .data 1
+659: .data 1
+660: .data 1
+661: .data 1
+662: .data 1
+663: .data 1
+664: .data 1
+665: .data 1
+666: .data 1
+667: .data 1
+668: .data 1
+669: .data 1
+670: .data 1
+671: .data 1
+672: .data 1
+673: .data 1
+674: .data 1
+675: .data 1
+676: .data 1
+677: .data 1
+678: .data 1
+679: .data 1
+680: .data 0
+681: .data 0
+682: .data 0
 683: .data 0
 684: .data 0
 685: .data 0
@@ -346,213 +433,530 @@ FROM_MANY:
 715: .data 0
 716: .data 0
 717: .data 0
-; Row 2: We start seeing blocks!
-718: add @1 @0 @2
+718: .data 1
+719: .data 1
+720: .data 0
+721: .data 2
 722: .data 0
-723: mul @2 @0 @0
-727: mul @0 @0 @2
-731: mul @2 @2 @2
-735: mul @0 @0 @0
-739: mul @2 @2 @2
-743: mul @2 @0 @2
-747: mul @2 @0 @2
+723: .data 2
+724: .data 2
+725: .data 0
+726: .data 0
+727: .data 2
+728: .data 0
+729: .data 0
+730: .data 2
+731: .data 2
+732: .data 2
+733: .data 2
+734: .data 2
+735: .data 2
+736: .data 0
+737: .data 0
+738: .data 0
+739: .data 2
+740: .data 2
+741: .data 2
+742: .data 2
+743: .data 2
+744: .data 2
+745: .data 0
+746: .data 2
+747: .data 2
+748: .data 2
+749: .data 0
+750: .data 2
 751: .data 0
 752: .data 0
 753: .data 0
-754: mul @2 @2 @0
-758: add @1 @0 @2
+754: .data 2
+755: .data 2
+756: .data 2
+757: .data 0
+758: .data 1
+759: .data 1
+760: .data 0
+761: .data 2
 762: .data 0
 763: .data 0
 764: .data 0
-765: mul @0 @2 @2
+765: .data 2
+766: .data 0
+767: .data 2
+768: .data 2
 769: .data 0
-770: mul @0 @2 @2
+770: .data 2
+771: .data 0
+772: .data 2
+773: .data 2
 774: .data 0
-775: mul @0 @0 @2
+775: .data 2
+776: .data 0
+777: .data 0
+778: .data 2
 779: .data 0
 780: .data 0
-781: mul @2 @0 @2
-785: mul @2 @0 @2
-789: mul @0 @0 @2
+781: .data 2
+782: .data 2
+783: .data 0
+784: .data 2
+785: .data 2
+786: .data 2
+787: .data 0
+788: .data 2
+789: .data 2
+790: .data 0
+791: .data 0
+792: .data 2
 793: .data 0
-794: mul @2 @2 @0
-798: add @1 @0 @2
-802: mul @2 @0 @0
+794: .data 2
+795: .data 2
+796: .data 2
+797: .data 0
+798: .data 1
+799: .data 1
+800: .data 0
+801: .data 2
+802: .data 2
+803: .data 2
+804: .data 0
+805: .data 0
 806: .data 0
-807: mul @0 @0 @0
-811: mul @0 @2 @2
+807: .data 2
+808: .data 0
+809: .data 0
+810: .data 0
+811: .data 2
+812: .data 0
+813: .data 2
+814: .data 2
 815: .data 0
-816: mul @2 @2 @0
-820: mul @0 @2 @2
+816: .data 2
+817: .data 2
+818: .data 2
+819: .data 0
+820: .data 2
+821: .data 0
+822: .data 2
+823: .data 2
 824: .data 0
 825: .data 0
 826: .data 0
 827: .data 0
-828: mul @2 @2 @2
+828: .data 2
+829: .data 2
+830: .data 2
+831: .data 2
 832: .data 0
-833: mul @0 @2 @0
+833: .data 2
+834: .data 0
+835: .data 2
+836: .data 0
 837: .data 0
-838: add @1 @0 @0
-842: mul @2 @0 @0
+838: .data 1
+839: .data 1
+840: .data 0
+841: .data 0
+842: .data 2
+843: .data 2
+844: .data 0
+845: .data 0
 846: .data 0
 847: .data 0
-848: mul @2 @2 @0
-852: mul @2 @2 @0
+848: .data 2
+849: .data 2
+850: .data 2
+851: .data 0
+852: .data 2
+853: .data 2
+854: .data 2
+855: .data 0
 856: .data 0
 857: .data 0
-858: mul @2 @2 @2
-862: mul @0 @0 @0
+858: .data 2
+859: .data 2
+860: .data 2
+861: .data 2
+862: .data 2
+863: .data 0
+864: .data 0
+865: .data 0
 866: .data 0
 867: .data 0
-868: mul @2 @2 @2
+868: .data 2
+869: .data 2
+870: .data 2
+871: .data 2
 872: .data 0
-873: mul @0 @0 @2
+873: .data 2
+874: .data 0
+875: .data 0
+876: .data 2
 877: .data 0
-878: add @1 @0 @2
+878: .data 1
+879: .data 1
+880: .data 0
+881: .data 2
 882: .data 0
-883: mul @2 @0 @0
+883: .data 2
+884: .data 2
+885: .data 0
+886: .data 0
 887: .data 0
-888: mul @0 @0 @2
+888: .data 2
+889: .data 0
+890: .data 0
+891: .data 2
 892: .data 0
-893: mul @2 @2 @2
+893: .data 2
+894: .data 2
+895: .data 2
+896: .data 2
 897: .data 0
-898: mul @0 @0 @0
-902: mul @0 @0 @2
+898: .data 2
+899: .data 0
+900: .data 0
+901: .data 0
+902: .data 2
+903: .data 0
+904: .data 0
+905: .data 2
 906: .data 0
 907: .data 0
 908: .data 0
-909: mul @2 @2 @2
-913: mul @0 @0 @0
+909: .data 2
+910: .data 2
+911: .data 2
+912: .data 2
+913: .data 2
+914: .data 0
+915: .data 0
+916: .data 0
 917: .data 0
-918: add @1 @0 @0
+918: .data 1
+919: .data 1
+920: .data 0
+921: .data 0
 922: .data 0
-923: mul @0 @2 @2
-927: mul @0 @2 @2
+923: .data 2
+924: .data 0
+925: .data 2
+926: .data 2
+927: .data 2
+928: .data 0
+929: .data 2
+930: .data 2
 931: .data 0
 932: .data 0
 933: .data 0
-934: mul @0 @2 @2
+934: .data 2
+935: .data 0
+936: .data 2
+937: .data 2
 938: .data 0
 939: .data 0
 940: .data 0
-941: mul @2 @2 @2
+941: .data 2
+942: .data 2
+943: .data 2
+944: .data 2
 945: .data 0
-946: mul @2 @2 @0
+946: .data 2
+947: .data 2
+948: .data 2
+949: .data 0
 950: .data 0
-951: mul @2 @0 @2
+951: .data 2
+952: .data 2
+953: .data 0
+954: .data 2
 955: .data 0
 956: .data 0
 957: .data 0
-958: add @1 @0 @2
-962: mul @0 @2 @0
-966: mul @0 @2 @0
+958: .data 1
+959: .data 1
+960: .data 0
+961: .data 2
+962: .data 2
+963: .data 0
+964: .data 2
+965: .data 0
+966: .data 2
+967: .data 0
+968: .data 2
+969: .data 0
 970: .data 0
-971: mul @0 @0 @0
-975: mul @2 @0 @0
-979: mul @0 @0 @0
-983: mul @0 @2 @0
+971: .data 2
+972: .data 0
+973: .data 0
+974: .data 0
+975: .data 2
+976: .data 2
+977: .data 0
+978: .data 0
+979: .data 2
+980: .data 0
+981: .data 0
+982: .data 0
+983: .data 2
+984: .data 0
+985: .data 2
+986: .data 0
 987: .data 0
 988: .data 0
 989: .data 0
-990: mul @2 @2 @0
-994: mul @2 @0 @0
-998: add @1 @0 @0
+990: .data 2
+991: .data 2
+992: .data 2
+993: .data 0
+994: .data 2
+995: .data 2
+996: .data 0
+997: .data 0
+998: .data 1
+999: .data 1
+1000: .data 0
+1001: .data 0
 1002: .data 0
 1003: .data 0
 1004: .data 0
 1005: .data 0
-1006: mul @0 @2 @0
-1010: mul @2 @0 @0
+1006: .data 2
+1007: .data 0
+1008: .data 2
+1009: .data 0
+1010: .data 2
+1011: .data 2
+1012: .data 0
+1013: .data 0
 1014: .data 0
 1015: .data 0
 1016: .data 0
 1017: .data 0
-1018: mul @0 @2 @2
-1022: mul @0 @0 @2
+1018: .data 2
+1019: .data 0
+1020: .data 2
+1021: .data 2
+1022: .data 2
+1023: .data 0
+1024: .data 0
+1025: .data 2
 1026: .data 0
-1027: mul @0 @0 @0
+1027: .data 2
+1028: .data 0
+1029: .data 0
+1030: .data 0
 1031: .data 0
 1032: .data 0
-1033: mul @2 @0 @2
+1033: .data 2
+1034: .data 2
+1035: .data 0
+1036: .data 2
 1037: .data 0
-1038: add @1 @0 @2
+1038: .data 1
+1039: .data 1
+1040: .data 0
+1041: .data 2
 1042: .data 0
 1043: .data 0
-1044: mul @2 @0 @2
+1044: .data 2
+1045: .data 2
+1046: .data 0
+1047: .data 2
 1048: .data 0
-1049: mul @2 @2 @2
+1049: .data 2
+1050: .data 2
+1051: .data 2
+1052: .data 2
 1053: .data 0
-1054: mul @2 @0 @0
-1058: mul @0 @0 @2
+1054: .data 2
+1055: .data 2
+1056: .data 0
+1057: .data 0
+1058: .data 2
+1059: .data 0
+1060: .data 0
+1061: .data 2
 1062: .data 0
-1063: mul @2 @2 @0
+1063: .data 2
+1064: .data 2
+1065: .data 2
+1066: .data 0
 1067: .data 0
-1068: mul @0 @2 @2
-1072: mul @2 @0 @2
+1068: .data 2
+1069: .data 0
+1070: .data 2
+1071: .data 2
+1072: .data 2
+1073: .data 2
+1074: .data 0
+1075: .data 2
 1076: .data 0
 1077: .data 0
-1078: add @1 @0 @2
+1078: .data 1
+1079: .data 1
+1080: .data 0
+1081: .data 2
 1082: .data 0
-1083: mul @0 @0 @0
-1087: mul @0 @2 @0
+1083: .data 2
+1084: .data 0
+1085: .data 0
+1086: .data 0
+1087: .data 2
+1088: .data 0
+1089: .data 2
+1090: .data 0
 1091: .data 0
 1092: .data 0
-1093: mul @2 @2 @2
+1093: .data 2
+1094: .data 2
+1095: .data 2
+1096: .data 2
 1097: .data 0
-1098: mul @2 @2 @0
+1098: .data 2
+1099: .data 2
+1100: .data 2
+1101: .data 0
 1102: .data 0
 1103: .data 0
-1104: mul @0 @0 @0
-1108: mul @0 @0 @0
+1104: .data 2
+1105: .data 0
+1106: .data 0
+1107: .data 0
+1108: .data 2
+1109: .data 0
+1110: .data 0
+1111: .data 0
 1112: .data 0
 1113: .data 0
 1114: .data 0
 1115: .data 0
 1116: .data 0
 1117: .data 0
-1118: add @1 @0 @0
-1122: mul @2 @2 @2
-1126: mul @2 @0 @2
+1118: .data 1
+1119: .data 1
+1120: .data 0
+1121: .data 0
+1122: .data 2
+1123: .data 2
+1124: .data 2
+1125: .data 2
+1126: .data 2
+1127: .data 2
+1128: .data 0
+1129: .data 2
 1130: .data 0
 1131: .data 0
-1132: mul @2 @2 @0
+1132: .data 2
+1133: .data 2
+1134: .data 2
+1135: .data 0
 1136: .data 0
-1137: mul @0 @0 @0
+1137: .data 2
+1138: .data 0
+1139: .data 0
+1140: .data 0
 1141: .data 0
-1142: mul @2 @0 @2
+1142: .data 2
+1143: .data 2
+1144: .data 0
+1145: .data 2
 1146: .data 0
 1147: .data 0
-1148: mul @0 @0 @2
-1152: mul @0 @2 @2
-1156: mul @0 @1 @1
+1148: .data 2
+1149: .data 0
+1150: .data 0
+1151: .data 2
+1152: .data 2
+1153: .data 0
+1154: .data 2
+1155: .data 2
+1156: .data 2
+1157: .data 0
+1158: .data 1
+1159: .data 1
 1160: .data 0
 1161: .data 0
 1162: .data 0
-1163: mul @0 @2 @2
-1167: mul @0 @2 @0
+1163: .data 2
+1164: .data 0
+1165: .data 2
+1166: .data 2
+1167: .data 2
+1168: .data 0
+1169: .data 2
+1170: .data 0
 1171: .data 0
-1172: mul @0 @2 @2
-1176: mul @2 @2 @2
-1180: mul @2 @0 @0
-1184: mul @0 @0 @0
-1188: mul @2 @0 @2
-1192: mul @2 @0 @0
+1172: .data 2
+1173: .data 0
+1174: .data 2
+1175: .data 2
+1176: .data 2
+1177: .data 2
+1178: .data 2
+1179: .data 2
+1180: .data 2
+1181: .data 2
+1182: .data 0
+1183: .data 0
+1184: .data 2
+1185: .data 0
+1186: .data 0
+1187: .data 0
+1188: .data 2
+1189: .data 2
+1190: .data 0
+1191: .data 2
+1192: .data 2
+1193: .data 2
+1194: .data 0
+1195: .data 0
 1196: .data 0
 1197: .data 0
-1198: add @1 @0 @2
+1198: .data 1
+1199: .data 1
+1200: .data 0
+1201: .data 2
 1202: .data 0
-1203: mul @2 @0 @2
-1207: mul @0 @0 @0
+1203: .data 2
+1204: .data 2
+1205: .data 0
+1206: .data 2
+1207: .data 2
+1208: .data 0
+1209: .data 0
+1210: .data 0
 1211: .data 0
-1212: mul @0 @2 @0
-1216: mul @2 @2 @2
-1220: mul @0 @2 @0
-1224: mul @0 @2 @0
-1228: mul @2 @2 @0
-1232: mul @2 @2 @2
+1212: .data 2
+1213: .data 0
+1214: .data 2
+1215: .data 0
+1216: .data 2
+1217: .data 2
+1218: .data 2
+1219: .data 2
+1220: .data 2
+1221: .data 0
+1222: .data 2
+1223: .data 0
+1224: .data 2
+1225: .data 0
+1226: .data 2
+1227: .data 0
+1228: .data 2
+1229: .data 2
+1230: .data 2
+1231: .data 0
+1232: .data 2
+1233: .data 2
+1234: .data 2
+1235: .data 2
 1236: .data 0
 1237: .data 0
-1238: add @1 @0 @0
+1238: .data 1
+1239: .data 1
+1240: .data 0
+1241: .data 0
 1242: .data 0
 1243: .data 0
 1244: .data 0
@@ -589,7 +993,10 @@ FROM_MANY:
 1275: .data 0
 1276: .data 0
 1277: .data 0
-1278: add @1 @0 @0
+1278: .data 1
+1279: .data 1
+1280: .data 0
+1281: .data 0
 1282: .data 0
 1283: .data 0
 1284: .data 0
@@ -605,7 +1012,8 @@ FROM_MANY:
 1294: .data 0
 1295: .data 0
 1296: .data 0
-1297: out @0
+1297: .data 4
+1298: .data 0
 1299: .data 0
 1300: .data 0
 1301: .data 0
@@ -625,7 +1033,10 @@ FROM_MANY:
 1315: .data 0
 1316: .data 0
 1317: .data 0
-1318: add @1 @0 @0
+1318: .data 1
+1319: .data 1
+1320: .data 0
+1321: .data 0
 1322: .data 0
 1323: .data 0
 1324: .data 0
@@ -662,7 +1073,10 @@ FROM_MANY:
 1355: .data 0
 1356: .data 0
 1357: .data 0
-1358: add @1 @0 @0
+1358: .data 1
+1359: .data 1
+1360: .data 0
+1361: .data 0
 1362: .data 0
 1363: .data 0
 1364: .data 0
@@ -699,7 +1113,10 @@ FROM_MANY:
 1395: .data 0
 1396: .data 0
 1397: .data 0
-1398: add @1 @0 @0
+1398: .data 1
+1399: .data 1
+1400: .data 0
+1401: .data 0
 1402: .data 0
 1403: .data 0
 1404: .data 0
@@ -717,7 +1134,8 @@ FROM_MANY:
 1416: .data 0
 1417: .data 0
 1418: .data 0
-1419: inp @0
+1419: .data 3
+1420: .data 0
 1421: .data 0
 1422: .data 0
 1423: .data 0
@@ -735,7 +1153,10 @@ FROM_MANY:
 1435: .data 0
 1436: .data 0
 1437: .data 0
-1438: add @1 @0 @0
+1438: .data 1
+1439: .data 1
+1440: .data 0
+1441: .data 0
 1442: .data 0
 1443: .data 0
 1444: .data 0
@@ -772,11 +1193,12 @@ FROM_MANY:
 1475: .data 0
 1476: .data 0
 1477: .data 0
-1478: add @55 @58 @16
+1478: .data 1
+; END OF TILE ID TABLE
 
-
-
-
+1479: 55 (invalid data!)
+1480: 58 (invalid data!)
+1481: 16 (invalid data!)
 1482: 34 (invalid data!)
 1483: 73 (invalid data!)
 1484: 94 (invalid data!)
