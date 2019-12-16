@@ -141,6 +141,7 @@ type
 #
 # Need to understand the game mechanics better first, though.
 # So probably need to visualize and enable playing by hand.
+# Hmm, game is losable if you send the ball on a bounce that exceeds how fast you can reach where it will land. So there are branching choices.
 
 proc askHuman(): JoystickPos =
   while true:
@@ -157,10 +158,12 @@ var machine2 = makeMachine(
   onInput = (m: Machine) => askHuman().Int,
   onOutput =
   proc(i: Int, m: Machine): void =
-    eraseScreen()
-    setCursorPos(0, 0)
+    # eraseScreen()
+    # setCursorPos(0, 0)
+    echo "out: ", i
+    echo "pc: ", m.ip
     screen2.output(i)
-    echo screen2.show()
+    # echo screen2.show()
 )
 machine2.run()
 

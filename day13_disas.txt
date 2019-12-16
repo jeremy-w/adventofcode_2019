@@ -20,6 +20,7 @@ RESET COL:
 WRITE_TILE_ID:
 ; Table lookup - R0 is return address, R1 and R2 args col & row.
 ; Tile ID is returned in R1.
+; CALL_578(r1 = @382 COL, r2 = @383 ROW)
 22: mul #1 @382 R1
 26: mul #1 @383 R2
 30: mul #1 #37 R0
@@ -105,6 +106,7 @@ MOVE_PADDLE:
 177: brz #0 #578
 
 ; Some sort of CASE analysis here: 0, 2, other. Probably 1.
+; Maybe the tile that is going to be hit?
 180: brz R1 #213 WHEN_0
 183: eq? R1 #2 @381
 187: brz @381 #205 WHEN_2
@@ -120,6 +122,7 @@ WHEN_2:
 209: mul #1 #1 @384  ; Set joystick to right?
 
 WHEN_0:
+; CALL_578(@388, @389+@391)
 213: add #0 @388 R1
 217: add @389 @391 R2
 221: add #0 #228 R0
@@ -176,6 +179,10 @@ WHEN_0:
 376: out #0
 378: hlt
 
+; 379-392 are variables.
+; suggested by: rg -o '@3\d{2}' day13_disas.txt | cut -c2- | sort -un | less
+; after noting several in this range.
+; plus 393 is a popular jump target - 3 callers.
 379: .data 0
 380: add @0 @0 @0
 384: .data 0
@@ -198,14 +205,18 @@ WHEN_0:
 418: add #0 R-1 R2
 422: add #429 #0 R0
 426: brz #0 #601
+
+; Increase score by R1
 429: add #0 R1 @435
-433: add @386 @0 @386
+433: add @386 @0_COMPUTED @386
+; Write updated score
 437: out #-1
 439: out #0
 441: out @386
+; VAR: @387 looks to be Block Count?
+; Reduce block count by one.
 443: add @387 #-1 @387
 447: bnz @387 #451
-
 450: hlt
 451: rba #-3
 453: bnz #1 R0
@@ -229,16 +240,24 @@ WHEN_0:
 507: add R-3 R-1 R-3
 511: lt? R-3 R-2 @381
 515: brz @381 #507
+
 518: lt? R-3 R-4 @381
 522: bnz @381 #540
 
 525: mul R-4 #-1 R-1
+
 529: add R-3 R-1 R-3
 533: lt? R-3 R-4 @381
 537: brz @381 #529
+
 540: add #0 R-3 R-7
 544: rba #-8
 546: brz #0 R0
+
+# WRITE_TILE_CONTENTS
+# Called after a move to update the screen,
+# first for the new paddle location (clear old, set new),
+# next for the new ball location (clear old, set new).
 549: rba #4
 551: mul R-2 #40 @566
 555: add R-3 @566 @566
@@ -253,10 +272,14 @@ WHEN_0:
 
 FROM_MANY:
 ; DISPATCH TABLE?
+; TILE_AT(r1 = COL, r2 = ROW)
 578: rba #3
+; Now r1 is r-2, r2 is r-1
+; IDX = 40*ROW + COL
 580: mul R-1 #40 @593
 584: add R-2 @593 @593
 588: add #639 @593 @593
+; RETURN #639 + IDX
 592: mul @0 #1 R-2
 596: rba #-3
 598: bnz #1 R0
@@ -273,6 +296,9 @@ FROM_MANY:
 630: add R1 #1479 R-2
 634: rba #-3
 636: brz #0 R0
+
+# VAR: TILE ID TABLE: 639 through 1479. 40*ROW + COL
+# Row 0: a lot of wall
 639: add @1 @1 @1
 643: add @1 @1 @1
 647: add @1 @1 @1
@@ -283,6 +309,7 @@ FROM_MANY:
 667: add @1 @1 @1
 671: add @1 @1 @1
 675: add @1 @1 @1
+; Row 1: wall, empty, wall
 679: add @0 @0 @0
 683: .data 0
 684: .data 0
@@ -319,6 +346,7 @@ FROM_MANY:
 715: .data 0
 716: .data 0
 717: .data 0
+; Row 2: We start seeing blocks!
 718: add @1 @0 @2
 722: .data 0
 723: mul @2 @0 @0
@@ -745,6 +773,10 @@ FROM_MANY:
 1476: .data 0
 1477: .data 0
 1478: add @55 @58 @16
+
+
+
+
 1482: 34 (invalid data!)
 1483: 73 (invalid data!)
 1484: 94 (invalid data!)

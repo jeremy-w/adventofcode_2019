@@ -38,7 +38,7 @@ type
 
   Machine* = ref object of RootObj
     id*: string
-    ip: Int
+    ip*: Int
     relativeBase: Int
     mem: Memory
     onInput*: (Machine) -> Int
