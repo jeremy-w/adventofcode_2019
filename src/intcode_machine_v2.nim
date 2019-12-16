@@ -99,6 +99,42 @@ proc load(m: Machine, index: Int): Int =
     echo &">> load[{index}]"
   return m.mem[index]
 
+proc toProgram*(line: string): seq[Int] =
+  line.strip.split(",").map(parseBiggestInt)
+
+proc toString*(mem: seq[int]): string =
+  mem.mapIt($it).join(",")
+
+proc toPrettyProgram*(prog: Memory, dataRanges: openArray[Slice[int]] = []): string =
+  var ip = 0
+  var lines = newSeq[string]()
+  while ip < prog.len:
+    var isData = false
+    for r in dataRanges:
+      if ip in r:
+        isData = true
+    if isData:
+      lines.add &"{ip}: .data {prog[ip]}"
+      inc ip
+      continue
+
+    try:
+      var insn = prog[ip].toInstruction
+      var line = $insn.op
+      var args = prog[ip+1 .. ip+insn.op.paramCount]
+      for i, arg in args:
+        line &= " "
+        case insn.params[i]
+        of pmImmediate: line &= &"#{arg}"
+        of pmPosition: line &= &"@{arg}"
+        of pmRelative: line &= &"R{arg}"
+      lines.add &"{ip}: {line}"
+      inc ip, 1 + insn.op.paramCount
+    except RangeError, IndexError:
+      lines.add &"{ip}: .data {prog[ip]}"
+      inc ip
+  result = lines.join("\n")
+
 ## Runs an Intcode program.
 ##
 ## An Intcode machine's memory starts at address 0.
@@ -196,42 +232,6 @@ proc run*(m: Machine) =
 
     if not didJump:
       inc m.ip, 1 + instruction.op.paramCount
-
-proc toProgram*(line: string): seq[Int] =
-  line.strip.split(",").map(parseBiggestInt)
-
-proc toString*(mem: seq[int]): string =
-  mem.mapIt($it).join(",")
-
-proc toPrettyProgram*(prog: Memory, dataRanges: openArray[Slice[int]] = []): string =
-  var ip = 0
-  var lines = newSeq[string]()
-  while ip < prog.len:
-    var isData = false
-    for r in dataRanges:
-      if ip in r:
-        isData = true
-    if isData:
-      lines.add &"{ip}: .data {prog[ip]}"
-      inc ip
-      continue
-
-    try:
-      var insn = prog[ip].toInstruction
-      var line = $insn.op
-      var args = prog[ip+1 .. ip+insn.op.paramCount]
-      for i, arg in args:
-        line &= " "
-        case insn.params[i]
-        of pmImmediate: line &= &"#{arg}"
-        of pmPosition: line &= &"@{arg}"
-        of pmRelative: line &= &"R{arg}"
-      lines.add &"{ip}: {line}"
-      inc ip, 1 + insn.op.paramCount
-    except RangeError, IndexError:
-      lines.add &"{ip}: .data {prog[ip]}"
-      inc ip
-  result = lines.join("\n")
 
 when defined(test):
   echo "# testing: intcode_machine"

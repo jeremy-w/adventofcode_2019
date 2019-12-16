@@ -170,35 +170,54 @@ var machine2 = makeMachine(
       echo screen2.show()
       outputCounter = 0
 )
-machine2.run()
+#machine2.run()
 
 proc disassembleProgram() {.used.} =
   const
     VarRange = 379..392
     TileIdTableRange = 639..1478
-  echo playableProg.toPrettyProgram(dataRanges = @[VarRange, TileIdTableRange])
-#disassembleProgram()
+    ScoreTableRange = 1479..(1479+840)
+  echo playableProg.toPrettyProgram(dataRanges = @[VarRange, TileIdTableRange,
+      ScoreTableRange])
+# disassembleProgram()
 
 proc points_sub(col: Int, row: Int): Int =
   result = 431*(21*col + row)
-  #echo result
   result += 286
-  #echo result
   while result > 64*840:
     result -= 64*840
-    #echo result
+
   while result > 8*840:
     result -= 8*840
-    #echo result
+
   while result > 840:
     result -= 840
-    #echo result
+
 
 proc points(col, row: Int): Int =
-  1479 + points_sub(col, row)
+  let scoreAddr = points_sub(col, row) + 1479
+  return playableProg[scoreAddr]
 
 # 17,14 gives 70 points
-#doAssert points(23, 14) == 44, &"got: {points(23, 14)}"
+doAssert points(17, 14) == 70, &"got: {points(17, 14)}"
+
+#[
+The point sub is called with these args for (23, 14):
+
+  R-8: 630 # ret addr
+  R-7: 497 # 21*23 + 14
+  # next 3 are puzzle-specific inputs for my puzzle
+  R-6: 431
+  R-5: 286
+  R-4: 840
+  R-3: 0
+  R-2: 0
+  R-1: 0
+
+  then returns 293
+  and then add 1479 and get 1772
+]#
+doAssert points(23, 14) == 44, &"got: {points(23, 14)}"
 
 echo &"Final score: {screen2.score}"
 

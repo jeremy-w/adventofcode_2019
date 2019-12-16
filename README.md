@@ -33,6 +33,4 @@ Let's go with [Nim](https://nim-lang.org/) this year.
   ```
 
 ## Handy Tools
-- Intcode Disassembler: https://janiczek.github.io/advent-of-code/Year2019/Intcode/Disasm/?force_refresh=1
-  - I also have a toPrettyProgram of my own, but I can use the online one from my phone.
-  - Strike that - it seems to not notice when I paste in a program in Mobile Safari, and has no other UI to trigger it to run.
+- Use `toPrettyProgram` to disassemble an intcode program. You can pass it an array of ranges known to be data so it doesn't desync on opcode parsing.

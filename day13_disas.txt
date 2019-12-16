@@ -251,7 +251,7 @@ HANDLE_EMPTY_ROW:
 422: add #429 #0 R0
 426: brz #0 #601
 
-; Increase score by R1
+; Increase score by @R1 - there's a score lookup table from 1479 through 1479+840!
 429: add #0 R1 @435
 433: add @386(SCORE) @0_COMPUTED @386(SCORE)
 
@@ -333,7 +333,7 @@ LESS_THAN_64_TIMES_840:
 ;         result -= 8*840
 ;     while result > 840:
 ;         result -= 840
-; 
+;
 ; proc points(col, row: Int): Int =
 ;     1479 + points_sub(col, row)
 
@@ -1226,702 +1226,845 @@ FROM_MANY:
 1478: .data 1
 ; END OF TILE ID TABLE
 
-1479: 55 (invalid data!)
-1480: 58 (invalid data!)
-1481: 16 (invalid data!)
-1482: 34 (invalid data!)
-1483: 73 (invalid data!)
-1484: 94 (invalid data!)
-1485: 65 (invalid data!)
-1486: 31 (invalid data!)
-1487: 91 (invalid data!)
-1488: 83 (invalid data!)
-1489: 29 (invalid data!)
-1490: 64 (invalid data!)
-1491: 87 (invalid data!)
-1492: 32 (invalid data!)
-1493: 19 (invalid data!)
-1494: 13 (invalid data!)
-1495: 15 (invalid data!)
-1496: 82 (invalid data!)
-1497: 19 (invalid data!)
-1498: 98 (invalid data!)
-1499: 37 (invalid data!)
-1500: 85 (invalid data!)
-1501: 58 (invalid data!)
-1502: 41 (invalid data!)
-1503: 63 (invalid data!)
-1504: 56 (invalid data!)
-1505: 69 (invalid data!)
-1506: 56 (invalid data!)
-1507: 69 (invalid data!)
-1508: 38 (invalid data!)
-1509: 60 (invalid data!)
-1510: 58 (invalid data!)
-1511: 83 (invalid data!)
-1512: out @45
-1514: 76 (invalid data!)
-1515: out @63
-1517: 23 (invalid data!)
-1518: 31 (invalid data!)
-1519: out @79
-1521: 69 (invalid data!)
-1522: 97 (invalid data!)
-1523: 22 (invalid data!)
-1524: 86 (invalid data!)
-1525: 51 (invalid data!)
-1526: 88 (invalid data!)
-1527: 96 (invalid data!)
-1528: mul @39 @88 @53
-1532: 49 (invalid data!)
-1533: 70 (invalid data!)
-1534: 45 (invalid data!)
-1535: 49 (invalid data!)
-1536: 28 (invalid data!)
-1537: eq? @64 @81 @36
-1541: 84 (invalid data!)
-1542: eq? @47 @69 @56
-1546: add @82 @31 @94
-1550: 23 (invalid data!)
-1551: bnz @94 @17
-1554: 83 (invalid data!)
-1555: 46 (invalid data!)
-1556: 17 (invalid data!)
-1557: 18 (invalid data!)
-1558: 71 (invalid data!)
-1559: 90 (invalid data!)
-1560: 21 (invalid data!)
-1561: 30 (invalid data!)
-1562: 19 (invalid data!)
-1563: 35 (invalid data!)
-1564: 43 (invalid data!)
-1565: 90 (invalid data!)
-1566: 25 (invalid data!)
-1567: 82 (invalid data!)
-1568: 11 (invalid data!)
-1569: 39 (invalid data!)
-1570: 13 (invalid data!)
-1571: 94 (invalid data!)
-1572: 13 (invalid data!)
-1573: 68 (invalid data!)
-1574: 91 (invalid data!)
-1575: out @33
-1577: 21 (invalid data!)
-1578: 65 (invalid data!)
-1579: 86 (invalid data!)
-1580: 49 (invalid data!)
-1581: 17 (invalid data!)
-1582: 23 (invalid data!)
-1583: 92 (invalid data!)
-1584: 52 (invalid data!)
-1585: mul @44 @7 @47
-1589: 82 (invalid data!)
-1590: 36 (invalid data!)
-1591: 79 (invalid data!)
-1592: 52 (invalid data!)
-1593: 10 (invalid data!)
-1594: 53 (invalid data!)
-1595: 50 (invalid data!)
-1596: 21 (invalid data!)
-1597: 79 (invalid data!)
-1598: 94 (invalid data!)
-1599: 95 (invalid data!)
-1600: 13 (invalid data!)
-1601: 69 (invalid data!)
-1602: 74 (invalid data!)
-1603: 95 (invalid data!)
-1604: 26 (invalid data!)
-1605: lt? @18 @56 @21
-1609: rba @79
-1611: 84 (invalid data!)
-1612: 15 (invalid data!)
-1613: 56 (invalid data!)
-1614: 43 (invalid data!)
-1615: 60 (invalid data!)
-1616: 38 (invalid data!)
-1617: 85 (invalid data!)
-1618: 37 (invalid data!)
-1619: 93 (invalid data!)
-1620: 95 (invalid data!)
-1621: 96 (invalid data!)
-1622: 41 (invalid data!)
-1623: 54 (invalid data!)
-1624: 94 (invalid data!)
-1625: 71 (invalid data!)
-1626: bnz @59 @27
-1629: 69 (invalid data!)
-1630: 79 (invalid data!)
-1631: 52 (invalid data!)
-1632: 19 (invalid data!)
-1633: 58 (invalid data!)
-1634: 12 (invalid data!)
-1635: 85 (invalid data!)
-1636: 54 (invalid data!)
-1637: 87 (invalid data!)
-1638: 25 (invalid data!)
-1639: 94 (invalid data!)
-1640: lt? @19 @90 @54
-1644: 97 (invalid data!)
-1645: 13 (invalid data!)
-1646: 92 (invalid data!)
-1647: 80 (invalid data!)
-1648: 18 (invalid data!)
-1649: 39 (invalid data!)
-1650: 40 (invalid data!)
-1651: 31 (invalid data!)
-1652: 81 (invalid data!)
-1653: 76 (invalid data!)
-1654: 62 (invalid data!)
-1655: 53 (invalid data!)
-1656: 84 (invalid data!)
-1657: 82 (invalid data!)
-1658: 20 (invalid data!)
-1659: 64 (invalid data!)
-1660: 58 (invalid data!)
-1661: 65 (invalid data!)
-1662: out @18
-1664: 32 (invalid data!)
-1665: 38 (invalid data!)
-1666: 36 (invalid data!)
-1667: 66 (invalid data!)
-1668: 90 (invalid data!)
-1669: 97 (invalid data!)
-1670: 49 (invalid data!)
-1671: 59 (invalid data!)
-1672: lt? @89 @8 @2
-1676: 44 (invalid data!)
-1677: 60 (invalid data!)
-1678: 52 (invalid data!)
-1679: 80 (invalid data!)
-1680: 54 (invalid data!)
-1681: 85 (invalid data!)
-1682: eq? @81 @2 @34
-1686: 21 (invalid data!)
-1687: mul @48 @55 @51
-1691: 81 (invalid data!)
-1692: 67 (invalid data!)
-1693: 50 (invalid data!)
-1694: 93 (invalid data!)
-1695: 92 (invalid data!)
-1696: 25 (invalid data!)
-1697: 77 (invalid data!)
-1698: 54 (invalid data!)
-1699: 74 (invalid data!)
-1700: 37 (invalid data!)
-1701: 92 (invalid data!)
-1702: 18 (invalid data!)
-1703: 52 (invalid data!)
-1704: 27 (invalid data!)
-1705: 14 (invalid data!)
-1706: 41 (invalid data!)
-1707: 11 (invalid data!)
-1708: 32 (invalid data!)
-1709: 65 (invalid data!)
-1710: 11 (invalid data!)
-1711: 76 (invalid data!)
-1712: 44 (invalid data!)
-1713: 58 (invalid data!)
-1714: 48 (invalid data!)
-1715: 61 (invalid data!)
-1716: 65 (invalid data!)
-1717: 66 (invalid data!)
-1718: 62 (invalid data!)
-1719: 48 (invalid data!)
-1720: 47 (invalid data!)
-1721: 76 (invalid data!)
-1722: 12 (invalid data!)
-1723: 68 (invalid data!)
-1724: 73 (invalid data!)
-1725: 54 (invalid data!)
-1726: 42 (invalid data!)
-1727: 89 (invalid data!)
-1728: 36 (invalid data!)
-1729: 73 (invalid data!)
-1730: bnz @78 @72
-1733: inp @77
-1735: out @46
-1737: 68 (invalid data!)
-1738: 73 (invalid data!)
-1739: 75 (invalid data!)
-1740: 86 (invalid data!)
-1741: 77 (invalid data!)
-1742: 69 (invalid data!)
-1743: 65 (invalid data!)
-1744: 13 (invalid data!)
-1745: mul @97 @46 @98
-1749: 39 (invalid data!)
-1750: 45 (invalid data!)
-1751: 32 (invalid data!)
-1752: 57 (invalid data!)
-1753: 49 (invalid data!)
-1754: inp @24
-1756: 14 (invalid data!)
-1757: 12 (invalid data!)
-1758: 95 (invalid data!)
-1759: 92 (invalid data!)
-1760: 10 (invalid data!)
-1761: 94 (invalid data!)
-1762: 83 (invalid data!)
-1763: 24 (invalid data!)
-1764: 73 (invalid data!)
-1765: 97 (invalid data!)
-1766: 35 (invalid data!)
-1767: 67 (invalid data!)
-1768: mul @63 @42 @1
-1772: 44 (invalid data!)
-1773: 46 (invalid data!)
-1774: 41 (invalid data!)
-1775: 76 (invalid data!)
-1776: 96 (invalid data!)
-1777: 66 (invalid data!)
-1778: 82 (invalid data!)
-1779: 18 (invalid data!)
-1780: lt? @13 @2 @69
-1784: 77 (invalid data!)
-1785: 63 (invalid data!)
-1786: 12 (invalid data!)
-1787: 74 (invalid data!)
-1788: 70 (invalid data!)
-1789: 22 (invalid data!)
-1790: 60 (invalid data!)
-1791: 34 (invalid data!)
-1792: 16 (invalid data!)
-1793: 71 (invalid data!)
-1794: 10 (invalid data!)
-1795: 40 (invalid data!)
-1796: 82 (invalid data!)
-1797: 35 (invalid data!)
-1798: 88 (invalid data!)
-1799: 27 (invalid data!)
-1800: 41 (invalid data!)
-1801: 86 (invalid data!)
-1802: 44 (invalid data!)
-1803: 33 (invalid data!)
-1804: 49 (invalid data!)
-1805: 98 (invalid data!)
-1806: 78 (invalid data!)
-1807: 33 (invalid data!)
-1808: 35 (invalid data!)
-1809: 76 (invalid data!)
-1810: 47 (invalid data!)
-1811: 69 (invalid data!)
-1812: 61 (invalid data!)
-1813: 46 (invalid data!)
-1814: 81 (invalid data!)
-1815: 79 (invalid data!)
-1816: 35 (invalid data!)
-1817: 68 (invalid data!)
-1818: 40 (invalid data!)
-1819: 28 (invalid data!)
-1820: 92 (invalid data!)
-1821: 18 (invalid data!)
-1822: 22 (invalid data!)
-1823: 24 (invalid data!)
-1824: 74 (invalid data!)
-1825: rba @92
-1827: 18 (invalid data!)
-1828: 16 (invalid data!)
-1829: 40 (invalid data!)
-1830: 26 (invalid data!)
-1831: 47 (invalid data!)
-1832: 90 (invalid data!)
-1833: 61 (invalid data!)
-1834: 26 (invalid data!)
-1835: 29 (invalid data!)
-1836: 30 (invalid data!)
-1837: 72 (invalid data!)
-1838: 97 (invalid data!)
-1839: lt? @44 @93 @61
-1843: 66 (invalid data!)
-1844: 74 (invalid data!)
-1845: 41 (invalid data!)
-1846: 79 (invalid data!)
-1847: 46 (invalid data!)
-1848: 47 (invalid data!)
-1849: 92 (invalid data!)
-1850: 87 (invalid data!)
-1851: mul @77 @25 @67
-1855: 91 (invalid data!)
-1856: 67 (invalid data!)
-1857: 96 (invalid data!)
-1858: 66 (invalid data!)
-1859: 43 (invalid data!)
-1860: 23 (invalid data!)
-1861: 44 (invalid data!)
-1862: 83 (invalid data!)
-1863: 74 (invalid data!)
-1864: 90 (invalid data!)
-1865: 32 (invalid data!)
-1866: 18 (invalid data!)
-1867: 28 (invalid data!)
-1868: 70 (invalid data!)
-1869: 77 (invalid data!)
-1870: 31 (invalid data!)
-1871: mul @22 @54 @59
-1875: 28 (invalid data!)
-1876: 44 (invalid data!)
-1877: 15 (invalid data!)
-1878: 15 (invalid data!)
-1879: 45 (invalid data!)
-1880: 33 (invalid data!)
-1881: 96 (invalid data!)
-1882: 23 (invalid data!)
-1883: 67 (invalid data!)
-1884: 69 (invalid data!)
-1885: 24 (invalid data!)
-1886: 63 (invalid data!)
-1887: 10 (invalid data!)
-1888: 72 (invalid data!)
-1889: 44 (invalid data!)
-1890: 96 (invalid data!)
-1891: 43 (invalid data!)
-1892: 77 (invalid data!)
-1893: 66 (invalid data!)
-1894: 53 (invalid data!)
-1895: 41 (invalid data!)
-1896: 63 (invalid data!)
-1897: 21 (invalid data!)
-1898: 64 (invalid data!)
-1899: 46 (invalid data!)
-1900: 52 (invalid data!)
-1901: 84 (invalid data!)
-1902: 70 (invalid data!)
-1903: 35 (invalid data!)
-1904: 21 (invalid data!)
-1905: 85 (invalid data!)
-1906: 30 (invalid data!)
-1907: 69 (invalid data!)
-1908: 64 (invalid data!)
-1909: 62 (invalid data!)
-1910: 92 (invalid data!)
-1911: 83 (invalid data!)
-1912: 42 (invalid data!)
-1913: 56 (invalid data!)
-1914: 74 (invalid data!)
-1915: 91 (invalid data!)
-1916: 51 (invalid data!)
-1917: 52 (invalid data!)
-1918: 12 (invalid data!)
-1919: 45 (invalid data!)
-1920: 18 (invalid data!)
-1921: 13 (invalid data!)
-1922: 56 (invalid data!)
-1923: 64 (invalid data!)
-1924: 61 (invalid data!)
-1925: 94 (invalid data!)
-1926: 35 (invalid data!)
-1927: 46 (invalid data!)
-1928: 62 (invalid data!)
-1929: 74 (invalid data!)
-1930: 82 (invalid data!)
-1931: 39 (invalid data!)
-1932: 67 (invalid data!)
-1933: 43 (invalid data!)
-1934: 94 (invalid data!)
-1935: lt? @39 @15 @41
-1939: 98 (invalid data!)
-1940: 51 (invalid data!)
-1941: 57 (invalid data!)
-1942: 35 (invalid data!)
-1943: 83 (invalid data!)
-1944: 36 (invalid data!)
-1945: 55 (invalid data!)
-1946: eq? @56 @77 @22
-1950: 45 (invalid data!)
-1951: 51 (invalid data!)
-1952: 88 (invalid data!)
-1953: 72 (invalid data!)
-1954: 71 (invalid data!)
-1955: 73 (invalid data!)
-1956: 41 (invalid data!)
-1957: 31 (invalid data!)
-1958: 79 (invalid data!)
-1959: 40 (invalid data!)
-1960: 60 (invalid data!)
-1961: 50 (invalid data!)
-1962: 26 (invalid data!)
-1963: 67 (invalid data!)
-1964: 75 (invalid data!)
-1965: 57 (invalid data!)
-1966: 75 (invalid data!)
-1967: 50 (invalid data!)
-1968: 12 (invalid data!)
-1969: 63 (invalid data!)
-1970: 56 (invalid data!)
-1971: 38 (invalid data!)
-1972: 16 (invalid data!)
-1973: 47 (invalid data!)
-1974: 46 (invalid data!)
-1975: 11 (invalid data!)
-1976: 56 (invalid data!)
-1977: 96 (invalid data!)
-1978: 66 (invalid data!)
-1979: 58 (invalid data!)
-1980: lt? @8 @21 @70
-1984: 28 (invalid data!)
-1985: 30 (invalid data!)
-1986: 29 (invalid data!)
-1987: 52 (invalid data!)
-1988: 97 (invalid data!)
-1989: 48 (invalid data!)
-1990: 12 (invalid data!)
-1991: brz @21 @80
-1994: 67 (invalid data!)
-1995: out @2
-1997: 17 (invalid data!)
-1998: 40 (invalid data!)
-1999: 33 (invalid data!)
-2000: 54 (invalid data!)
-2001: 52 (invalid data!)
-2002: 36 (invalid data!)
-2003: 90 (invalid data!)
-2004: 64 (invalid data!)
-2005: 23 (invalid data!)
-2006: 81 (invalid data!)
-2007: 69 (invalid data!)
-2008: 95 (invalid data!)
-2009: 23 (invalid data!)
-2010: 38 (invalid data!)
-2011: 19 (invalid data!)
-2012: 46 (invalid data!)
-2013: 26 (invalid data!)
-2014: 16 (invalid data!)
-2015: 21 (invalid data!)
-2016: 54 (invalid data!)
-2017: 50 (invalid data!)
-2018: 13 (invalid data!)
-2019: 95 (invalid data!)
-2020: 59 (invalid data!)
-2021: 68 (invalid data!)
-2022: 40 (invalid data!)
-2023: 97 (invalid data!)
-2024: 68 (invalid data!)
-2025: 31 (invalid data!)
-2026: 13 (invalid data!)
-2027: 49 (invalid data!)
-2028: 59 (invalid data!)
-2029: 15 (invalid data!)
-2030: 57 (invalid data!)
-2031: 29 (invalid data!)
-2032: 23 (invalid data!)
-2033: 35 (invalid data!)
-2034: 43 (invalid data!)
-2035: 31 (invalid data!)
-2036: 70 (invalid data!)
-2037: lt? @74 @8 @4
-2041: 61 (invalid data!)
-2042: 18 (invalid data!)
-2043: 82 (invalid data!)
-2044: 43 (invalid data!)
-2045: out @58
-2047: 12 (invalid data!)
-2048: 66 (invalid data!)
-2049: 69 (invalid data!)
-2050: 23 (invalid data!)
-2051: 43 (invalid data!)
-2052: 31 (invalid data!)
-2053: 16 (invalid data!)
-2054: rba @61
-2056: 90 (invalid data!)
-2057: 69 (invalid data!)
-2058: 80 (invalid data!)
-2059: 82 (invalid data!)
-2060: 66 (invalid data!)
-2061: 81 (invalid data!)
-2062: 21 (invalid data!)
-2063: 24 (invalid data!)
-2064: bnz @37 @70
-2067: 30 (invalid data!)
-2068: 44 (invalid data!)
-2069: 92 (invalid data!)
-2070: 42 (invalid data!)
-2071: 41 (invalid data!)
-2072: 27 (invalid data!)
-2073: 28 (invalid data!)
-2074: 58 (invalid data!)
-2075: 91 (invalid data!)
-2076: 19 (invalid data!)
-2077: 53 (invalid data!)
-2078: 51 (invalid data!)
-2079: bnz @95 @31
-2082: 98 (invalid data!)
-2083: 84 (invalid data!)
-2084: brz @62 @30
-2087: 36 (invalid data!)
-2088: 26 (invalid data!)
-2089: 26 (invalid data!)
-2090: bnz @95 @50
-2093: 16 (invalid data!)
-2094: 19 (invalid data!)
-2095: 10 (invalid data!)
-2096: 50 (invalid data!)
-2097: 10 (invalid data!)
-2098: 44 (invalid data!)
-2099: 96 (invalid data!)
-2100: 80 (invalid data!)
-2101: 39 (invalid data!)
-2102: 96 (invalid data!)
-2103: 28 (invalid data!)
-2104: 87 (invalid data!)
-2105: 94 (invalid data!)
-2106: 47 (invalid data!)
-2107: 79 (invalid data!)
-2108: 92 (invalid data!)
-2109: 47 (invalid data!)
-2110: eq? @86 @54 @38
-2114: 49 (invalid data!)
-2115: 87 (invalid data!)
-2116: 96 (invalid data!)
-2117: 78 (invalid data!)
-2118: 66 (invalid data!)
-2119: 86 (invalid data!)
-2120: brz @77 @55
-2123: 11 (invalid data!)
-2124: 82 (invalid data!)
-2125: 73 (invalid data!)
-2126: 22 (invalid data!)
-2127: 75 (invalid data!)
-2128: add @11 @83 @20
-2132: eq? @27 @64 @24
-2136: 38 (invalid data!)
-2137: 11 (invalid data!)
-2138: 23 (invalid data!)
-2139: 43 (invalid data!)
-2140: 68 (invalid data!)
-2141: 60 (invalid data!)
-2142: 52 (invalid data!)
-2143: 45 (invalid data!)
-2144: 44 (invalid data!)
-2145: 67 (invalid data!)
-2146: 35 (invalid data!)
-2147: 77 (invalid data!)
-2148: 57 (invalid data!)
-2149: add @96 @6 @57
-2153: 28 (invalid data!)
-2154: 52 (invalid data!)
-2155: 97 (invalid data!)
-2156: 27 (invalid data!)
-2157: 55 (invalid data!)
-2158: 64 (invalid data!)
-2159: 94 (invalid data!)
-2160: 96 (invalid data!)
-2161: 23 (invalid data!)
-2162: 11 (invalid data!)
-2163: rba @37
-2165: 70 (invalid data!)
-2166: 15 (invalid data!)
-2167: 35 (invalid data!)
-2168: 36 (invalid data!)
-2169: 58 (invalid data!)
-2170: 34 (invalid data!)
-2171: 34 (invalid data!)
-2172: 16 (invalid data!)
-2173: 69 (invalid data!)
-2174: 69 (invalid data!)
-2175: 82 (invalid data!)
-2176: 62 (invalid data!)
-2177: 88 (invalid data!)
-2178: 91 (invalid data!)
-2179: 29 (invalid data!)
-2180: 31 (invalid data!)
-2181: 95 (invalid data!)
-2182: 35 (invalid data!)
-2183: 54 (invalid data!)
-2184: 61 (invalid data!)
-2185: 12 (invalid data!)
-2186: 23 (invalid data!)
-2187: 76 (invalid data!)
-2188: 26 (invalid data!)
-2189: add @33 @51 @41
-2193: 45 (invalid data!)
-2194: 74 (invalid data!)
-2195: 80 (invalid data!)
-2196: brz @36 @93
-2199: 13 (invalid data!)
-2200: 26 (invalid data!)
-2201: 81 (invalid data!)
-2202: 79 (invalid data!)
-2203: bnz @54 @17
-2206: 27 (invalid data!)
-2207: 51 (invalid data!)
-2208: 15 (invalid data!)
-2209: 52 (invalid data!)
-2210: 36 (invalid data!)
-2211: 31 (invalid data!)
-2212: bnz @62 @70
-2215: 21 (invalid data!)
-2216: 87 (invalid data!)
-2217: 76 (invalid data!)
-2218: 55 (invalid data!)
-2219: 26 (invalid data!)
-2220: 59 (invalid data!)
-2221: 81 (invalid data!)
-2222: 88 (invalid data!)
-2223: 90 (invalid data!)
-2224: out @40
-2226: 94 (invalid data!)
-2227: 55 (invalid data!)
-2228: 36 (invalid data!)
-2229: 32 (invalid data!)
-2230: 94 (invalid data!)
-2231: 62 (invalid data!)
-2232: 73 (invalid data!)
-2233: 43 (invalid data!)
-2234: mul @39 @77 @51
-2238: 28 (invalid data!)
-2239: 24 (invalid data!)
-2240: 69 (invalid data!)
-2241: 21 (invalid data!)
-2242: 66 (invalid data!)
-2243: 43 (invalid data!)
-2244: 14 (invalid data!)
-2245: 74 (invalid data!)
-2246: 10 (invalid data!)
-2247: 46 (invalid data!)
-2248: 33 (invalid data!)
-2249: add @29 @74 @2
-2253: 33 (invalid data!)
-2254: 68 (invalid data!)
-2255: 68 (invalid data!)
-2256: 72 (invalid data!)
-2257: 21 (invalid data!)
-2258: 51 (invalid data!)
-2259: 91 (invalid data!)
-2260: 82 (invalid data!)
-2261: add @69 @80 @78
-2265: 69 (invalid data!)
-2266: lt? @14 @43 @25
-2270: 10 (invalid data!)
-2271: 69 (invalid data!)
-2272: 27 (invalid data!)
-2273: 13 (invalid data!)
-2274: 90 (invalid data!)
-2275: 50 (invalid data!)
-2276: 28 (invalid data!)
-2277: 21 (invalid data!)
-2278: 40 (invalid data!)
-2279: 16 (invalid data!)
-2280: 68 (invalid data!)
-2281: 58 (invalid data!)
-2282: brz @23 @87
-2285: brz @74 @9
-2288: 91 (invalid data!)
-2289: 25 (invalid data!)
-2290: 98 (invalid data!)
-2291: 58 (invalid data!)
-2292: 47 (invalid data!)
-2293: 91 (invalid data!)
-2294: inp @38
-2296: inp @91
-2298: out @28
-2300: 84 (invalid data!)
-2301: 12 (invalid data!)
-2302: mul @54 @92 @27
-2306: 81 (invalid data!)
-2307: 13 (invalid data!)
-2308: 33 (invalid data!)
-2309: 89 (invalid data!)
-2310: 38 (invalid data!)
-2311: add @64 @91 @21
-2315: lt? @41 @74 @74
-2319: 92 (invalid data!)
+; START OF SCORE TABLE
+1479: .data 55
+1480: .data 58
+1481: .data 16
+1482: .data 34
+1483: .data 73
+1484: .data 94
+1485: .data 65
+1486: .data 31
+1487: .data 91
+1488: .data 83
+1489: .data 29
+1490: .data 64
+1491: .data 87
+1492: .data 32
+1493: .data 19
+1494: .data 13
+1495: .data 15
+1496: .data 82
+1497: .data 19
+1498: .data 98
+1499: .data 37
+1500: .data 85
+1501: .data 58
+1502: .data 41
+1503: .data 63
+1504: .data 56
+1505: .data 69
+1506: .data 56
+1507: .data 69
+1508: .data 38
+1509: .data 60
+1510: .data 58
+1511: .data 83
+1512: .data 4
+1513: .data 45
+1514: .data 76
+1515: .data 4
+1516: .data 63
+1517: .data 23
+1518: .data 31
+1519: .data 4
+1520: .data 79
+1521: .data 69
+1522: .data 97
+1523: .data 22
+1524: .data 86
+1525: .data 51
+1526: .data 88
+1527: .data 96
+1528: .data 2
+1529: .data 39
+1530: .data 88
+1531: .data 53
+1532: .data 49
+1533: .data 70
+1534: .data 45
+1535: .data 49
+1536: .data 28
+1537: .data 8
+1538: .data 64
+1539: .data 81
+1540: .data 36
+1541: .data 84
+1542: .data 8
+1543: .data 47
+1544: .data 69
+1545: .data 56
+1546: .data 1
+1547: .data 82
+1548: .data 31
+1549: .data 94
+1550: .data 23
+1551: .data 5
+1552: .data 94
+1553: .data 17
+1554: .data 83
+1555: .data 46
+1556: .data 17
+1557: .data 18
+1558: .data 71
+1559: .data 90
+1560: .data 21
+1561: .data 30
+1562: .data 19
+1563: .data 35
+1564: .data 43
+1565: .data 90
+1566: .data 25
+1567: .data 82
+1568: .data 11
+1569: .data 39
+1570: .data 13
+1571: .data 94
+1572: .data 13
+1573: .data 68
+1574: .data 91
+1575: .data 4
+1576: .data 33
+1577: .data 21
+1578: .data 65
+1579: .data 86
+1580: .data 49
+1581: .data 17
+1582: .data 23
+1583: .data 92
+1584: .data 52
+1585: .data 2
+1586: .data 44
+1587: .data 7
+1588: .data 47
+1589: .data 82
+1590: .data 36
+1591: .data 79
+1592: .data 52
+1593: .data 10
+1594: .data 53
+1595: .data 50
+1596: .data 21
+1597: .data 79
+1598: .data 94
+1599: .data 95
+1600: .data 13
+1601: .data 69
+1602: .data 74
+1603: .data 95
+1604: .data 26
+1605: .data 7
+1606: .data 18
+1607: .data 56
+1608: .data 21
+1609: .data 9
+1610: .data 79
+1611: .data 84
+1612: .data 15
+1613: .data 56
+1614: .data 43
+1615: .data 60
+1616: .data 38
+1617: .data 85
+1618: .data 37
+1619: .data 93
+1620: .data 95
+1621: .data 96
+1622: .data 41
+1623: .data 54
+1624: .data 94
+1625: .data 71
+1626: .data 5
+1627: .data 59
+1628: .data 27
+1629: .data 69
+1630: .data 79
+1631: .data 52
+1632: .data 19
+1633: .data 58
+1634: .data 12
+1635: .data 85
+1636: .data 54
+1637: .data 87
+1638: .data 25
+1639: .data 94
+1640: .data 7
+1641: .data 19
+1642: .data 90
+1643: .data 54
+1644: .data 97
+1645: .data 13
+1646: .data 92
+1647: .data 80
+1648: .data 18
+1649: .data 39
+1650: .data 40
+1651: .data 31
+1652: .data 81
+1653: .data 76
+1654: .data 62
+1655: .data 53
+1656: .data 84
+1657: .data 82
+1658: .data 20
+1659: .data 64
+1660: .data 58
+1661: .data 65
+1662: .data 4
+1663: .data 18
+1664: .data 32
+1665: .data 38
+1666: .data 36
+1667: .data 66
+1668: .data 90
+1669: .data 97
+1670: .data 49
+1671: .data 59
+1672: .data 7
+1673: .data 89
+1674: .data 8
+1675: .data 2
+1676: .data 44
+1677: .data 60
+1678: .data 52
+1679: .data 80
+1680: .data 54
+1681: .data 85
+1682: .data 8
+1683: .data 81
+1684: .data 2
+1685: .data 34
+1686: .data 21
+1687: .data 2
+1688: .data 48
+1689: .data 55
+1690: .data 51
+1691: .data 81
+1692: .data 67
+1693: .data 50
+1694: .data 93
+1695: .data 92
+1696: .data 25
+1697: .data 77
+1698: .data 54
+1699: .data 74
+1700: .data 37
+1701: .data 92
+1702: .data 18
+1703: .data 52
+1704: .data 27
+1705: .data 14
+1706: .data 41
+1707: .data 11
+1708: .data 32
+1709: .data 65
+1710: .data 11
+1711: .data 76
+1712: .data 44
+1713: .data 58
+1714: .data 48
+1715: .data 61
+1716: .data 65
+1717: .data 66
+1718: .data 62
+1719: .data 48
+1720: .data 47
+1721: .data 76
+1722: .data 12
+1723: .data 68
+1724: .data 73
+1725: .data 54
+1726: .data 42
+1727: .data 89
+1728: .data 36
+1729: .data 73
+1730: .data 5
+1731: .data 78
+1732: .data 72
+1733: .data 3
+1734: .data 77
+1735: .data 4
+1736: .data 46
+1737: .data 68
+1738: .data 73
+1739: .data 75
+1740: .data 86
+1741: .data 77
+1742: .data 69
+1743: .data 65
+1744: .data 13
+1745: .data 2
+1746: .data 97
+1747: .data 46
+1748: .data 98
+1749: .data 39
+1750: .data 45
+1751: .data 32
+1752: .data 57
+1753: .data 49
+1754: .data 3
+1755: .data 24
+1756: .data 14
+1757: .data 12
+1758: .data 95
+1759: .data 92
+1760: .data 10
+1761: .data 94
+1762: .data 83
+1763: .data 24
+1764: .data 73
+1765: .data 97
+1766: .data 35
+1767: .data 67
+1768: .data 2
+1769: .data 63
+1770: .data 42
+1771: .data 1
+1772: .data 44
+1773: .data 46
+1774: .data 41
+1775: .data 76
+1776: .data 96
+1777: .data 66
+1778: .data 82
+1779: .data 18
+1780: .data 7
+1781: .data 13
+1782: .data 2
+1783: .data 69
+1784: .data 77
+1785: .data 63
+1786: .data 12
+1787: .data 74
+1788: .data 70
+1789: .data 22
+1790: .data 60
+1791: .data 34
+1792: .data 16
+1793: .data 71
+1794: .data 10
+1795: .data 40
+1796: .data 82
+1797: .data 35
+1798: .data 88
+1799: .data 27
+1800: .data 41
+1801: .data 86
+1802: .data 44
+1803: .data 33
+1804: .data 49
+1805: .data 98
+1806: .data 78
+1807: .data 33
+1808: .data 35
+1809: .data 76
+1810: .data 47
+1811: .data 69
+1812: .data 61
+1813: .data 46
+1814: .data 81
+1815: .data 79
+1816: .data 35
+1817: .data 68
+1818: .data 40
+1819: .data 28
+1820: .data 92
+1821: .data 18
+1822: .data 22
+1823: .data 24
+1824: .data 74
+1825: .data 9
+1826: .data 92
+1827: .data 18
+1828: .data 16
+1829: .data 40
+1830: .data 26
+1831: .data 47
+1832: .data 90
+1833: .data 61
+1834: .data 26
+1835: .data 29
+1836: .data 30
+1837: .data 72
+1838: .data 97
+1839: .data 7
+1840: .data 44
+1841: .data 93
+1842: .data 61
+1843: .data 66
+1844: .data 74
+1845: .data 41
+1846: .data 79
+1847: .data 46
+1848: .data 47
+1849: .data 92
+1850: .data 87
+1851: .data 2
+1852: .data 77
+1853: .data 25
+1854: .data 67
+1855: .data 91
+1856: .data 67
+1857: .data 96
+1858: .data 66
+1859: .data 43
+1860: .data 23
+1861: .data 44
+1862: .data 83
+1863: .data 74
+1864: .data 90
+1865: .data 32
+1866: .data 18
+1867: .data 28
+1868: .data 70
+1869: .data 77
+1870: .data 31
+1871: .data 2
+1872: .data 22
+1873: .data 54
+1874: .data 59
+1875: .data 28
+1876: .data 44
+1877: .data 15
+1878: .data 15
+1879: .data 45
+1880: .data 33
+1881: .data 96
+1882: .data 23
+1883: .data 67
+1884: .data 69
+1885: .data 24
+1886: .data 63
+1887: .data 10
+1888: .data 72
+1889: .data 44
+1890: .data 96
+1891: .data 43
+1892: .data 77
+1893: .data 66
+1894: .data 53
+1895: .data 41
+1896: .data 63
+1897: .data 21
+1898: .data 64
+1899: .data 46
+1900: .data 52
+1901: .data 84
+1902: .data 70
+1903: .data 35
+1904: .data 21
+1905: .data 85
+1906: .data 30
+1907: .data 69
+1908: .data 64
+1909: .data 62
+1910: .data 92
+1911: .data 83
+1912: .data 42
+1913: .data 56
+1914: .data 74
+1915: .data 91
+1916: .data 51
+1917: .data 52
+1918: .data 12
+1919: .data 45
+1920: .data 18
+1921: .data 13
+1922: .data 56
+1923: .data 64
+1924: .data 61
+1925: .data 94
+1926: .data 35
+1927: .data 46
+1928: .data 62
+1929: .data 74
+1930: .data 82
+1931: .data 39
+1932: .data 67
+1933: .data 43
+1934: .data 94
+1935: .data 7
+1936: .data 39
+1937: .data 15
+1938: .data 41
+1939: .data 98
+1940: .data 51
+1941: .data 57
+1942: .data 35
+1943: .data 83
+1944: .data 36
+1945: .data 55
+1946: .data 8
+1947: .data 56
+1948: .data 77
+1949: .data 22
+1950: .data 45
+1951: .data 51
+1952: .data 88
+1953: .data 72
+1954: .data 71
+1955: .data 73
+1956: .data 41
+1957: .data 31
+1958: .data 79
+1959: .data 40
+1960: .data 60
+1961: .data 50
+1962: .data 26
+1963: .data 67
+1964: .data 75
+1965: .data 57
+1966: .data 75
+1967: .data 50
+1968: .data 12
+1969: .data 63
+1970: .data 56
+1971: .data 38
+1972: .data 16
+1973: .data 47
+1974: .data 46
+1975: .data 11
+1976: .data 56
+1977: .data 96
+1978: .data 66
+1979: .data 58
+1980: .data 7
+1981: .data 8
+1982: .data 21
+1983: .data 70
+1984: .data 28
+1985: .data 30
+1986: .data 29
+1987: .data 52
+1988: .data 97
+1989: .data 48
+1990: .data 12
+1991: .data 6
+1992: .data 21
+1993: .data 80
+1994: .data 67
+1995: .data 4
+1996: .data 2
+1997: .data 17
+1998: .data 40
+1999: .data 33
+2000: .data 54
+2001: .data 52
+2002: .data 36
+2003: .data 90
+2004: .data 64
+2005: .data 23
+2006: .data 81
+2007: .data 69
+2008: .data 95
+2009: .data 23
+2010: .data 38
+2011: .data 19
+2012: .data 46
+2013: .data 26
+2014: .data 16
+2015: .data 21
+2016: .data 54
+2017: .data 50
+2018: .data 13
+2019: .data 95
+2020: .data 59
+2021: .data 68
+2022: .data 40
+2023: .data 97
+2024: .data 68
+2025: .data 31
+2026: .data 13
+2027: .data 49
+2028: .data 59
+2029: .data 15
+2030: .data 57
+2031: .data 29
+2032: .data 23
+2033: .data 35
+2034: .data 43
+2035: .data 31
+2036: .data 70
+2037: .data 7
+2038: .data 74
+2039: .data 8
+2040: .data 4
+2041: .data 61
+2042: .data 18
+2043: .data 82
+2044: .data 43
+2045: .data 4
+2046: .data 58
+2047: .data 12
+2048: .data 66
+2049: .data 69
+2050: .data 23
+2051: .data 43
+2052: .data 31
+2053: .data 16
+2054: .data 9
+2055: .data 61
+2056: .data 90
+2057: .data 69
+2058: .data 80
+2059: .data 82
+2060: .data 66
+2061: .data 81
+2062: .data 21
+2063: .data 24
+2064: .data 5
+2065: .data 37
+2066: .data 70
+2067: .data 30
+2068: .data 44
+2069: .data 92
+2070: .data 42
+2071: .data 41
+2072: .data 27
+2073: .data 28
+2074: .data 58
+2075: .data 91
+2076: .data 19
+2077: .data 53
+2078: .data 51
+2079: .data 5
+2080: .data 95
+2081: .data 31
+2082: .data 98
+2083: .data 84
+2084: .data 6
+2085: .data 62
+2086: .data 30
+2087: .data 36
+2088: .data 26
+2089: .data 26
+2090: .data 5
+2091: .data 95
+2092: .data 50
+2093: .data 16
+2094: .data 19
+2095: .data 10
+2096: .data 50
+2097: .data 10
+2098: .data 44
+2099: .data 96
+2100: .data 80
+2101: .data 39
+2102: .data 96
+2103: .data 28
+2104: .data 87
+2105: .data 94
+2106: .data 47
+2107: .data 79
+2108: .data 92
+2109: .data 47
+2110: .data 8
+2111: .data 86
+2112: .data 54
+2113: .data 38
+2114: .data 49
+2115: .data 87
+2116: .data 96
+2117: .data 78
+2118: .data 66
+2119: .data 86
+2120: .data 6
+2121: .data 77
+2122: .data 55
+2123: .data 11
+2124: .data 82
+2125: .data 73
+2126: .data 22
+2127: .data 75
+2128: .data 1
+2129: .data 11
+2130: .data 83
+2131: .data 20
+2132: .data 8
+2133: .data 27
+2134: .data 64
+2135: .data 24
+2136: .data 38
+2137: .data 11
+2138: .data 23
+2139: .data 43
+2140: .data 68
+2141: .data 60
+2142: .data 52
+2143: .data 45
+2144: .data 44
+2145: .data 67
+2146: .data 35
+2147: .data 77
+2148: .data 57
+2149: .data 1
+2150: .data 96
+2151: .data 6
+2152: .data 57
+2153: .data 28
+2154: .data 52
+2155: .data 97
+2156: .data 27
+2157: .data 55
+2158: .data 64
+2159: .data 94
+2160: .data 96
+2161: .data 23
+2162: .data 11
+2163: .data 9
+2164: .data 37
+2165: .data 70
+2166: .data 15
+2167: .data 35
+2168: .data 36
+2169: .data 58
+2170: .data 34
+2171: .data 34
+2172: .data 16
+2173: .data 69
+2174: .data 69
+2175: .data 82
+2176: .data 62
+2177: .data 88
+2178: .data 91
+2179: .data 29
+2180: .data 31
+2181: .data 95
+2182: .data 35
+2183: .data 54
+2184: .data 61
+2185: .data 12
+2186: .data 23
+2187: .data 76
+2188: .data 26
+2189: .data 1
+2190: .data 33
+2191: .data 51
+2192: .data 41
+2193: .data 45
+2194: .data 74
+2195: .data 80
+2196: .data 6
+2197: .data 36
+2198: .data 93
+2199: .data 13
+2200: .data 26
+2201: .data 81
+2202: .data 79
+2203: .data 5
+2204: .data 54
+2205: .data 17
+2206: .data 27
+2207: .data 51
+2208: .data 15
+2209: .data 52
+2210: .data 36
+2211: .data 31
+2212: .data 5
+2213: .data 62
+2214: .data 70
+2215: .data 21
+2216: .data 87
+2217: .data 76
+2218: .data 55
+2219: .data 26
+2220: .data 59
+2221: .data 81
+2222: .data 88
+2223: .data 90
+2224: .data 4
+2225: .data 40
+2226: .data 94
+2227: .data 55
+2228: .data 36
+2229: .data 32
+2230: .data 94
+2231: .data 62
+2232: .data 73
+2233: .data 43
+2234: .data 2
+2235: .data 39
+2236: .data 77
+2237: .data 51
+2238: .data 28
+2239: .data 24
+2240: .data 69
+2241: .data 21
+2242: .data 66
+2243: .data 43
+2244: .data 14
+2245: .data 74
+2246: .data 10
+2247: .data 46
+2248: .data 33
+2249: .data 1
+2250: .data 29
+2251: .data 74
+2252: .data 2
+2253: .data 33
+2254: .data 68
+2255: .data 68
+2256: .data 72
+2257: .data 21
+2258: .data 51
+2259: .data 91
+2260: .data 82
+2261: .data 1
+2262: .data 69
+2263: .data 80
+2264: .data 78
+2265: .data 69
+2266: .data 7
+2267: .data 14
+2268: .data 43
+2269: .data 25
+2270: .data 10
+2271: .data 69
+2272: .data 27
+2273: .data 13
+2274: .data 90
+2275: .data 50
+2276: .data 28
+2277: .data 21
+2278: .data 40
+2279: .data 16
+2280: .data 68
+2281: .data 58
+2282: .data 6
+2283: .data 23
+2284: .data 87
+2285: .data 6
+2286: .data 74
+2287: .data 9
+2288: .data 91
+2289: .data 25
+2290: .data 98
+2291: .data 58
+2292: .data 47
+2293: .data 91
+2294: .data 3
+2295: .data 38
+2296: .data 3
+2297: .data 91
+2298: .data 4
+2299: .data 28
+2300: .data 84
+2301: .data 12
+2302: .data 2
+2303: .data 54
+2304: .data 92
+2305: .data 27
+2306: .data 81
+2307: .data 13
+2308: .data 33
+2309: .data 89
+2310: .data 38
+2311: .data 1
+2312: .data 64
+2313: .data 91
+2314: .data 21
+2315: .data 7
+2316: .data 41
+2317: .data 74
+2318: .data 74
+2319: .data 922392
