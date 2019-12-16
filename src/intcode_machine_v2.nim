@@ -203,10 +203,19 @@ proc toProgram*(line: string): seq[Int] =
 proc toString*(mem: seq[int]): string =
   mem.mapIt($it).join(",")
 
-proc toPrettyProgram*(prog: Memory): string =
+proc toPrettyProgram*(prog: Memory, dataRanges: openArray[Slice[int]] = []): string =
   var ip = 0
   var lines = newSeq[string]()
   while ip < prog.len:
+    var isData = false
+    for r in dataRanges:
+      if ip in r:
+        isData = true
+    if isData:
+      lines.add &"{ip}: .data {prog[ip]}"
+      inc ip
+      continue
+
     try:
       var insn = prog[ip].toInstruction
       var line = $insn.op

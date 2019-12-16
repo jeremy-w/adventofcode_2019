@@ -170,4 +170,11 @@ var machine2 = makeMachine(
 )
 machine2.run()
 
+proc disassembleProgram() {.used.} =
+  const
+    VarRange = 379..392
+    TileIdTableRange = 639..1478
+  echo playableProg.toPrettyProgram(dataRanges = @[VarRange, TileIdTableRange])
+#disassembleProgram()
+
 echo &"Final score: {screen2.score}"
