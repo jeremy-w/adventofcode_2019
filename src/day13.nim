@@ -145,8 +145,8 @@ type
 
 proc askHuman(): JoystickPos =
   while true:
-    stdout.write("n = left, e = none, i = right\pmove: ")
-    case stdin.readChar
+    stdout.write("n = left, e = none, i = right\pMOVE: ")
+    case getch():
     of 'n': return jpLeft
     of 'e': return jpNeutral
     of 'i': return jpRight
