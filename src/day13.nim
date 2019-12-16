@@ -14,6 +14,7 @@ Start the game. How many block tiles are on the screen when the game exits?
 import intcode_machine_v2
 import sequtils
 import strformat
+import strutils
 import sugar
 import tables
 
@@ -28,17 +29,38 @@ type
     toId
 
   TileId = enum
-    tiEmpty
-    tiWall
-    tiBlock
-    tiPaddle
-    tiBall
+    tiEmpty = (0, " ")
+    tiWall = (1, "|")
+    tiBlock = (2, "#")
+    tiPaddle = (3, "_")
+    tiBall = (4, "O")
+
+  Point = tuple[c, r: Int]
 
   Screen = ref object of RootObj
-    disp: Table[tuple[c, r: Int], TileId]
+    disp: Table[Point, TileId]
     next: TileOutput
     score: Int
-    accu: tuple[c, r: Int]
+    accu: Point
+
+func corners(points: openArray[Point]): tuple[min, max: Point] =
+  var minP = (c: 99.Int, r: 99.Int)
+  var maxP = (c: -99.Int, r: -99.Int)
+  for (c, r) in points:
+    minP.c = min(minP.c, c)
+    minP.r = min(minP.r, r)
+    maxP.c = max(maxP.c, c)
+    maxP.r = max(maxP.r, r)
+  result.min = minP
+  result.max = maxP
+
+func show(s: Screen): string =
+  let (_, br) = toSeq(s.disp.keys).corners
+  var lines = sequtils.repeat(' '.repeat(br.c + 1), br.r + 1)
+  for pt, tile in s.disp:
+    lines[pt.r][pt.c] = ($tile)[0]
+  lines.add &"\pScore: {s.score}"
+  lines.join("\p")
 
 const prog = readFile("input/day13.txt").toProgram
 
@@ -73,14 +95,11 @@ let ballTileCount = toSeq(screen.disp.values).count(tiBall)
 let paddleTileCount = toSeq(screen.disp.values).count(tiPaddle)
 let wallTileCount = toSeq(screen.disp.values).count(tiWall)
 echo &"ball {ballTileCount}, paddle {paddleTileCount}, wall {wallTileCount}"
-var minP = (c: 99.Int, r: 99.Int)
-var maxP = (c: -99.Int, r: -99.Int)
-for (c, r) in screen.disp.keys:
-  minP.c = min(minP.c, c)
-  minP.r = min(minP.r, r)
-  maxP.c = max(maxP.c, c)
-  maxP.r = max(maxP.r, r)
+
+let (minP, maxP) = toSeq(screen.disp.keys).corners
 echo &"grid from {minP} to {maxP}"
+
+echo screen.show()
 
 #[
 Block tiles left at halt: 242
@@ -112,5 +131,14 @@ type
     jpRight
 
 # Beat the game by breaking all the blocks. What is your score after the last block is broken?
+
+# Approach:
+#
+# - Clone the machine
+# - Run the game ahead to see where the ball will land next
+# - Continue execution by moving the ball to the target location
+#
+# Need to understand the game mechanics better first, though.
+# So probably need to visualize and enable playing by hand.
 
 echo &"Final score: ???"
