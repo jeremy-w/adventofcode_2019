@@ -17,6 +17,10 @@ import strformat
 import sugar
 import tables
 
+const
+  NumRows = 21
+  NumCols = 40
+
 type
   TileOutput = enum
     toCol
@@ -51,6 +55,7 @@ func output(s: Screen, i: Int) =
     if s.accu == (-1.Int, 0.Int):
       s.score = i
     else:
+      # debugEcho &"drawing: {s.accu}"
       s.disp[s.accu] = i.TileId
     s.next = toCol
 
