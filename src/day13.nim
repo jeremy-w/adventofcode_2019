@@ -152,6 +152,7 @@ proc askHuman(): JoystickPos =
     of 'i': return jpRight
     else: continue
 
+var outputCounter = 0
 var screen2 = Screen()
 var machine2 = makeMachine(
   mem = playableProg,
@@ -160,10 +161,12 @@ var machine2 = makeMachine(
   proc(i: Int, m: Machine): void =
     # eraseScreen()
     # setCursorPos(0, 0)
-    echo "out: ", i
-    echo "pc: ", m.ip
+    echo "  out: ", i, "; pc: ", m.ip
     screen2.output(i)
-    # echo screen2.show()
+    inc outputCounter
+    if outputCounter == 3:
+      echo screen2.show()
+      outputCounter = 0
 )
 machine2.run()
 
