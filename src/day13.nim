@@ -150,7 +150,7 @@ proc askHuman(): JoystickPos =
     of 'n': return jpLeft
     of 'e': return jpNeutral
     of 'i': return jpRight
-    else: continue
+    else: quit(QuitSuccess)
 
 var outputCounter = 0
 var screen2 = Screen()
@@ -168,7 +168,7 @@ var machine2 = makeMachine(
       echo screen2.show()
       outputCounter = 0
 )
-machine2.run()
+# machine2.run()
 
 proc disassembleProgram() {.used.} =
   const
@@ -190,4 +190,12 @@ proc points_sub(col: Int, row: Int): Int =
 proc points(col, row: Int): Int =
   1479 + points_sub(col, row)
 
+doAssert points(23, 14) == 44, &"got: {points(23, 14)}"
+
 echo &"Final score: {screen2.score}"
+
+var winningScore = 0.Int
+for (loc, kind) in screen.disp.pairs:
+  if kind == tiBlock:
+    winningScore += points(loc.c, loc.r)
+echo "Winning Score: {winningScore}"
