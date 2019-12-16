@@ -269,44 +269,74 @@ HANDLE_EMPTY_ROW:
 453: bnz #1 R0
 
 ; called from the 601 point computation
-; 456_???(21*COL + ROW -4, #431 -3, #286 -2, #840 -1)
-; but written to expect 7 args
-; so basically looking into caller's stackframe of:
-;  RETADDR, COL -7, ROW -6, RETADDR -5
+; 456_???(21*COL + ROW -7, #431 -6, #286 -5, #840 -4)
+; retaddr + 7 stack slots
+; 4 of those are args, the rest working vars
+; r-3 will become the return value, call it rv
 456: rba #8
-458: mul R-7 R-6 R-3
-462: add R-3 R-5 R-3
-466: mul R-4 #64 R-2
-470: lt? R-3 R-2 @381
-474: bnz @381 #492
 
+; rv = 431 * (21*col + row)
+458: mul R-7 R-6 R-3
+; rv = rv + 286
+462: add R-3 R-5 R-3
+; rLess2 = 64*840
+466: mul R-4 #64 R-2
+; if rv < 64*840, jump to 492
+470: lt? R-3 R-2 @381
+474: bnz @381 #492 LESS_THAN_64_TIMES_840
+
+; rLess1 = -1*64*840
 477: mul R-2 #-1 R-1
 
+; rv += -1*64*840
 481: add R-3 R-1 R-3
+; if rv < 64*840, continue to 492, otherwise keep subtracting
 485: lt? R-3 R-2 @381
 489: brz @381 #481
 
+LESS_THAN_64_TIMES_840:
+; rLess2 = 8*840
 492: mul R-4 #8 R-2
+; if rv < 8*840, jump to 518
 496: lt? R-3 R-2 @381
 500: bnz @381 #518
 
+; rLess1 = -1*8*840
 503: mul R-2 #-1 R-1
+; rv -= rLess1
 507: add R-3 R-1 R-3
 511: lt? R-3 R-2 @381
 515: brz @381 #507
 
+; rv < 840 means go to 540
 518: lt? R-3 R-4 @381
 522: bnz @381 #540
 
+; now repeat the subtracty game with 1*840
 525: mul R-4 #-1 R-1
 
 529: add R-3 R-1 R-3
 533: lt? R-3 R-4 @381
 537: brz @381 #529
 
+; return R-3
 540: add #0 R-3 R-7
 544: rba #-8
 546: brz #0 R0
+
+; proc points_sub(col: Int, row: Int): Int =
+;     result = 431*(21*col + row)
+;     result += 286
+;     while result > 64*840:
+;         result -= 64*840
+;     while result > 8*840:
+;         result -= 8*840
+;     while result > 840:
+;         result -= 840
+; 
+; proc points(col, row: Int): Int =
+;     1479 + points_sub(col, row)
+
 
 # WRITE_TILE_CONTENTS
 # Called after a move to update the screen,

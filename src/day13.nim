@@ -177,4 +177,17 @@ proc disassembleProgram() {.used.} =
   echo playableProg.toPrettyProgram(dataRanges = @[VarRange, TileIdTableRange])
 #disassembleProgram()
 
+proc points_sub(col: Int, row: Int): Int =
+  result = 431*(21*col + row)
+  result += 286
+  while result > 64*840:
+    result -= 64*840
+  while result > 8*840:
+    result -= 8*840
+  while result > 840:
+    result -= 840
+
+proc points(col, row: Int): Int =
+  1479 + points_sub(col, row)
+
 echo &"Final score: {screen2.score}"
