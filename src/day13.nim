@@ -17,6 +17,7 @@ import strformat
 import strutils
 import sugar
 import tables
+import terminal
 
 const
   NumRows = 21
@@ -44,8 +45,8 @@ type
     accu: Point
 
 func corners(points: openArray[Point]): tuple[min, max: Point] =
-  var minP = (c: 99.Int, r: 99.Int)
-  var maxP = (c: -99.Int, r: -99.Int)
+  var minP = (c: NumCols.Int, r: NumRows.Int)
+  var maxP = (c: 0.Int, r: 0.Int)
   for (c, r) in points:
     minP.c = min(minP.c, c)
     minP.r = min(minP.r, r)
@@ -141,4 +142,26 @@ type
 # Need to understand the game mechanics better first, though.
 # So probably need to visualize and enable playing by hand.
 
-echo &"Final score: ???"
+proc askHuman(): JoystickPos =
+  while true:
+    stdout.write("n = left, e = none, i = right\pmove: ")
+    case stdin.readChar
+    of 'n': return jpLeft
+    of 'e': return jpNeutral
+    of 'i': return jpRight
+    else: continue
+
+var screen2 = Screen()
+var machine2 = makeMachine(
+  mem = playableProg,
+  onInput = (m: Machine) => askHuman().Int,
+  onOutput =
+  proc(i: Int, m: Machine): void =
+    eraseScreen()
+    setCursorPos(0, 0)
+    screen2.output(i)
+    echo screen2.show()
+)
+machine2.run()
+
+echo &"Final score: {screen2.score}"
