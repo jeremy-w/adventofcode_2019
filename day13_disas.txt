@@ -1,0 +1,1443 @@
+0: mul @380 @379 @385
+4: eq? @2319 #922392 @381
+8: bnz @381 #12 FROM_8
+11: hlt
+
+
+FROM_8:
+12: rba #2320
+
+; INITIAL SCREEN DISPLAY
+; This doesn't repeat again.
+; Probably we're just updating only the changed bits after this.
+; VAR: @382 is the COL
+; VAR: @383 is the ROW
+RESET_ROW:
+14: add #0 #0 @383
+RESET COL:
+18: add #0 #0 @382
+
+WRITE_TILE_ID:
+; Table lookup - R0 is return address, R1 and R2 args col & row.
+; Tile ID is returned in R1.
+22: mul #1 @382 R1
+26: mul #1 @383 R2
+30: mul #1 #37 R0
+34: bnz #1 #578
+37: out @382
+39: out @383
+; Presumably R1 has the return value (tile ID).
+41: out R1
+43: add @382 #1 @382
+; Check if last col.
+47: lt? @382 #40 @381
+51: bnz @381 #22 WRITE_TILE_ID
+
+54: add @383 #1 @383
+; Check if last row.
+58: lt? @383 #21 @381
+62: bnz @381 #18 RESET_COL
+65: brz @385 #69 OUTPUT_SCORE
+
+68: hlt
+
+OUTPUT_SCORE:
+69: out #-1
+71: out #0
+; VAR: @386 is the SCORE.
+73: out @386
+
+; This is the start of the core game loop.
+READ_MOVE:
+; It reads in. <0 is left, >0 is right.
+; If already leftmost/righmost, ignore move in that direction.
+; Otherwise, force to -1/+1.
+; VAR: @384 in JOYSTICK_INPUT
+75: inp @384
+77: lt? @384 #0 @381
+81: bnz @381 #94 HANDLE_LEFT
+
+84: lt? #0 @384 @381
+88: bnz @381 #108 HANDLE_RIGHT
+
+91: bnz #1 #161 JOYSTICK_DONE
+
+HANDLE_LEFT:
+; VAR: @392 is PADDLE_COL
+94: lt? #1 @392 @381
+; already at 0, leftmost pos
+98: brz @381 #161 JOYSTICK_DONE
+101: add #-1 #0 @384
+105: brz #0 #119
+
+HANDLE_RIGHT:
+108: lt? @392 #38 @381
+; already rightmost at 38
+112: brz @381 #161 JOYSTICK_DONE
+115: add #1 #0 @384
+
+MOVE_PADDLE:
+119: mul #1 @392 R1
+123: mul #19 #1 R2
+127: mul #1 #0 R3
+131: add #0 #138 R0
+; CALL_549(@392, 19, 1)
+135: bnz #1 #549
+
+; This actually updates the paddle position.
+; I don't know what the call is for.
+138: add @392 @384 @392
+
+; CALL_549(#161, @392, #19, #3)
+142: add @392 #0 R1
+146: mul #19 #1 R2
+150: add #3 #0 R3
+154: add #161 #0 R0
+158: brz #0 #549
+
+; Clear joystick input.
+161: mul #0 #1 @384
+
+; CALL_578(@388+@390, @389_BALL_POS)
+165: add @388 @390 R1
+169: add @389 #0 R2  ; BALL_POS
+173: add #0 #180 R0
+177: brz #0 #578
+
+; Some sort of CASE analysis here: 0, 2, other. Probably 1.
+180: brz R1 #213 WHEN_0
+183: eq? R1 #2 @381
+187: brz @381 #205 WHEN_2
+
+; CALL_393(@388+@390, @389_BALL_POS)
+190: add @388 @390 R1
+194: add @389 #0 R2  ; BALL_POS
+198: add #205 #0 R0
+202: bnz #1 #393
+
+WHEN_2:
+205: mul @390 #-1 @390  ; BALL_POS *= -1
+209: mul #1 #1 @384  ; Set joystick to right?
+
+WHEN_0:
+213: add #0 @388 R1
+217: add @389 @391 R2
+221: add #0 #228 R0
+225: bnz #1 #578
+
+228: brz R1 #261
+231: eq? R1 #2 @381
+235: brz @381 #253
+238: add @388 #0 R1
+242: add @389 @391 R2
+246: add #0 #253 R0
+250: brz #0 #393
+253: mul @391 #-1 @391
+257: mul #1 #1 @384
+261: bnz @384 #161
+
+264: add @388 @390 R1
+268: add @389 @391 R2
+272: add #0 #279 R0
+276: brz #0 #578
+
+279: brz R1 #316
+282: eq? R1 #2 @381
+286: brz @381 #304
+289: add @388 @390 R1
+293: add @389 @391 R2
+297: mul #1 #304 R0
+301: bnz #1 #393
+
+304: mul @390 #-1 @390
+308: mul @391 #-1 @391
+312: mul #1 #1 @384
+316: bnz @384 #161
+
+319: mul @388 #1 R1
+323: mul @389 #1 R2
+327: add #0 #0 R3
+331: mul #338 #1 R0
+335: brz #0 #549
+338: add @388 @390 @388
+342: add @389 @391 @389
+346: add #0 @388 R1
+350: add @389 #0 R2
+354: mul #1 #4 R3
+358: mul #1 #365 R0
+362: brz #0 #549
+; VAR: @389 is BALL_ROW. Once >= row 20, game over!
+365: lt? @389 #20 @381
+369: bnz @381 #75
+
+; Game Over: Output a score of 0 and halt.
+372: out #-1
+374: out #0
+376: out #0
+378: hlt
+
+379: .data 0
+380: add @0 @0 @0
+384: .data 0
+385: .data 0
+386: .data 0
+387: 42 (invalid data!)
+388: 18 (invalid data!)
+389: 16 (invalid data!)
+390: add @1 @20 @109
+394: inp @21202
+396: .data -2
+397: add @1 @21202 @-1
+401: add @2 @21102 @1
+405: .data 0
+406: inp @21102
+408: 14 (invalid data!)
+409: add @0 @1106 @0
+413: 49 (invalid data!)
+414: add #0 R-2 R1
+418: add #0 R-1 R2
+422: add #429 #0 R0
+426: brz #0 #601
+429: add #0 R1 @435
+433: add @386 @0 @386
+437: out #-1
+439: out #0
+441: out @386
+443: add @387 #-1 @387
+447: bnz @387 #451
+
+450: hlt
+451: rba #-3
+453: bnz #1 R0
+
+456: rba #8
+458: mul R-7 R-6 R-3
+462: add R-3 R-5 R-3
+466: mul R-4 #64 R-2
+470: lt? R-3 R-2 @381
+474: bnz @381 #492
+
+477: mul R-2 #-1 R-1
+481: add R-3 R-1 R-3
+485: lt? R-3 R-2 @381
+489: brz @381 #481
+492: mul R-4 #8 R-2
+496: lt? R-3 R-2 @381
+500: bnz @381 #518
+
+503: mul R-2 #-1 R-1
+507: add R-3 R-1 R-3
+511: lt? R-3 R-2 @381
+515: brz @381 #507
+518: lt? R-3 R-4 @381
+522: bnz @381 #540
+
+525: mul R-4 #-1 R-1
+529: add R-3 R-1 R-3
+533: lt? R-3 R-4 @381
+537: brz @381 #529
+540: add #0 R-3 R-7
+544: rba #-8
+546: brz #0 R0
+549: rba #4
+551: mul R-2 #40 @566
+555: add R-3 @566 @566
+559: add #639 @566 @566
+563: add #0 R-1 @0
+567: out R-3
+569: out R-2
+571: out R-1
+573: rba #-4
+575: brz #0 R0
+
+
+FROM_MANY:
+; DISPATCH TABLE?
+578: rba #3
+580: mul R-1 #40 @593
+584: add R-2 @593 @593
+588: add #639 @593 @593
+592: mul @0 #1 R-2
+596: rba #-3
+598: bnz #1 R0
+
+601: rba #3
+603: mul #21 R-2 R1
+607: add R1 R-1 R1
+611: mul #431 #1 R2
+615: mul #286 #1 R3
+619: mul #840 #1 R4
+623: add #0 #630 R0
+627: bnz #1 #456
+
+630: add R1 #1479 R-2
+634: rba #-3
+636: brz #0 R0
+639: add @1 @1 @1
+643: add @1 @1 @1
+647: add @1 @1 @1
+651: add @1 @1 @1
+655: add @1 @1 @1
+659: add @1 @1 @1
+663: add @1 @1 @1
+667: add @1 @1 @1
+671: add @1 @1 @1
+675: add @1 @1 @1
+679: add @0 @0 @0
+683: .data 0
+684: .data 0
+685: .data 0
+686: .data 0
+687: .data 0
+688: .data 0
+689: .data 0
+690: .data 0
+691: .data 0
+692: .data 0
+693: .data 0
+694: .data 0
+695: .data 0
+696: .data 0
+697: .data 0
+698: .data 0
+699: .data 0
+700: .data 0
+701: .data 0
+702: .data 0
+703: .data 0
+704: .data 0
+705: .data 0
+706: .data 0
+707: .data 0
+708: .data 0
+709: .data 0
+710: .data 0
+711: .data 0
+712: .data 0
+713: .data 0
+714: .data 0
+715: .data 0
+716: .data 0
+717: .data 0
+718: add @1 @0 @2
+722: .data 0
+723: mul @2 @0 @0
+727: mul @0 @0 @2
+731: mul @2 @2 @2
+735: mul @0 @0 @0
+739: mul @2 @2 @2
+743: mul @2 @0 @2
+747: mul @2 @0 @2
+751: .data 0
+752: .data 0
+753: .data 0
+754: mul @2 @2 @0
+758: add @1 @0 @2
+762: .data 0
+763: .data 0
+764: .data 0
+765: mul @0 @2 @2
+769: .data 0
+770: mul @0 @2 @2
+774: .data 0
+775: mul @0 @0 @2
+779: .data 0
+780: .data 0
+781: mul @2 @0 @2
+785: mul @2 @0 @2
+789: mul @0 @0 @2
+793: .data 0
+794: mul @2 @2 @0
+798: add @1 @0 @2
+802: mul @2 @0 @0
+806: .data 0
+807: mul @0 @0 @0
+811: mul @0 @2 @2
+815: .data 0
+816: mul @2 @2 @0
+820: mul @0 @2 @2
+824: .data 0
+825: .data 0
+826: .data 0
+827: .data 0
+828: mul @2 @2 @2
+832: .data 0
+833: mul @0 @2 @0
+837: .data 0
+838: add @1 @0 @0
+842: mul @2 @0 @0
+846: .data 0
+847: .data 0
+848: mul @2 @2 @0
+852: mul @2 @2 @0
+856: .data 0
+857: .data 0
+858: mul @2 @2 @2
+862: mul @0 @0 @0
+866: .data 0
+867: .data 0
+868: mul @2 @2 @2
+872: .data 0
+873: mul @0 @0 @2
+877: .data 0
+878: add @1 @0 @2
+882: .data 0
+883: mul @2 @0 @0
+887: .data 0
+888: mul @0 @0 @2
+892: .data 0
+893: mul @2 @2 @2
+897: .data 0
+898: mul @0 @0 @0
+902: mul @0 @0 @2
+906: .data 0
+907: .data 0
+908: .data 0
+909: mul @2 @2 @2
+913: mul @0 @0 @0
+917: .data 0
+918: add @1 @0 @0
+922: .data 0
+923: mul @0 @2 @2
+927: mul @0 @2 @2
+931: .data 0
+932: .data 0
+933: .data 0
+934: mul @0 @2 @2
+938: .data 0
+939: .data 0
+940: .data 0
+941: mul @2 @2 @2
+945: .data 0
+946: mul @2 @2 @0
+950: .data 0
+951: mul @2 @0 @2
+955: .data 0
+956: .data 0
+957: .data 0
+958: add @1 @0 @2
+962: mul @0 @2 @0
+966: mul @0 @2 @0
+970: .data 0
+971: mul @0 @0 @0
+975: mul @2 @0 @0
+979: mul @0 @0 @0
+983: mul @0 @2 @0
+987: .data 0
+988: .data 0
+989: .data 0
+990: mul @2 @2 @0
+994: mul @2 @0 @0
+998: add @1 @0 @0
+1002: .data 0
+1003: .data 0
+1004: .data 0
+1005: .data 0
+1006: mul @0 @2 @0
+1010: mul @2 @0 @0
+1014: .data 0
+1015: .data 0
+1016: .data 0
+1017: .data 0
+1018: mul @0 @2 @2
+1022: mul @0 @0 @2
+1026: .data 0
+1027: mul @0 @0 @0
+1031: .data 0
+1032: .data 0
+1033: mul @2 @0 @2
+1037: .data 0
+1038: add @1 @0 @2
+1042: .data 0
+1043: .data 0
+1044: mul @2 @0 @2
+1048: .data 0
+1049: mul @2 @2 @2
+1053: .data 0
+1054: mul @2 @0 @0
+1058: mul @0 @0 @2
+1062: .data 0
+1063: mul @2 @2 @0
+1067: .data 0
+1068: mul @0 @2 @2
+1072: mul @2 @0 @2
+1076: .data 0
+1077: .data 0
+1078: add @1 @0 @2
+1082: .data 0
+1083: mul @0 @0 @0
+1087: mul @0 @2 @0
+1091: .data 0
+1092: .data 0
+1093: mul @2 @2 @2
+1097: .data 0
+1098: mul @2 @2 @0
+1102: .data 0
+1103: .data 0
+1104: mul @0 @0 @0
+1108: mul @0 @0 @0
+1112: .data 0
+1113: .data 0
+1114: .data 0
+1115: .data 0
+1116: .data 0
+1117: .data 0
+1118: add @1 @0 @0
+1122: mul @2 @2 @2
+1126: mul @2 @0 @2
+1130: .data 0
+1131: .data 0
+1132: mul @2 @2 @0
+1136: .data 0
+1137: mul @0 @0 @0
+1141: .data 0
+1142: mul @2 @0 @2
+1146: .data 0
+1147: .data 0
+1148: mul @0 @0 @2
+1152: mul @0 @2 @2
+1156: mul @0 @1 @1
+1160: .data 0
+1161: .data 0
+1162: .data 0
+1163: mul @0 @2 @2
+1167: mul @0 @2 @0
+1171: .data 0
+1172: mul @0 @2 @2
+1176: mul @2 @2 @2
+1180: mul @2 @0 @0
+1184: mul @0 @0 @0
+1188: mul @2 @0 @2
+1192: mul @2 @0 @0
+1196: .data 0
+1197: .data 0
+1198: add @1 @0 @2
+1202: .data 0
+1203: mul @2 @0 @2
+1207: mul @0 @0 @0
+1211: .data 0
+1212: mul @0 @2 @0
+1216: mul @2 @2 @2
+1220: mul @0 @2 @0
+1224: mul @0 @2 @0
+1228: mul @2 @2 @0
+1232: mul @2 @2 @2
+1236: .data 0
+1237: .data 0
+1238: add @1 @0 @0
+1242: .data 0
+1243: .data 0
+1244: .data 0
+1245: .data 0
+1246: .data 0
+1247: .data 0
+1248: .data 0
+1249: .data 0
+1250: .data 0
+1251: .data 0
+1252: .data 0
+1253: .data 0
+1254: .data 0
+1255: .data 0
+1256: .data 0
+1257: .data 0
+1258: .data 0
+1259: .data 0
+1260: .data 0
+1261: .data 0
+1262: .data 0
+1263: .data 0
+1264: .data 0
+1265: .data 0
+1266: .data 0
+1267: .data 0
+1268: .data 0
+1269: .data 0
+1270: .data 0
+1271: .data 0
+1272: .data 0
+1273: .data 0
+1274: .data 0
+1275: .data 0
+1276: .data 0
+1277: .data 0
+1278: add @1 @0 @0
+1282: .data 0
+1283: .data 0
+1284: .data 0
+1285: .data 0
+1286: .data 0
+1287: .data 0
+1288: .data 0
+1289: .data 0
+1290: .data 0
+1291: .data 0
+1292: .data 0
+1293: .data 0
+1294: .data 0
+1295: .data 0
+1296: .data 0
+1297: out @0
+1299: .data 0
+1300: .data 0
+1301: .data 0
+1302: .data 0
+1303: .data 0
+1304: .data 0
+1305: .data 0
+1306: .data 0
+1307: .data 0
+1308: .data 0
+1309: .data 0
+1310: .data 0
+1311: .data 0
+1312: .data 0
+1313: .data 0
+1314: .data 0
+1315: .data 0
+1316: .data 0
+1317: .data 0
+1318: add @1 @0 @0
+1322: .data 0
+1323: .data 0
+1324: .data 0
+1325: .data 0
+1326: .data 0
+1327: .data 0
+1328: .data 0
+1329: .data 0
+1330: .data 0
+1331: .data 0
+1332: .data 0
+1333: .data 0
+1334: .data 0
+1335: .data 0
+1336: .data 0
+1337: .data 0
+1338: .data 0
+1339: .data 0
+1340: .data 0
+1341: .data 0
+1342: .data 0
+1343: .data 0
+1344: .data 0
+1345: .data 0
+1346: .data 0
+1347: .data 0
+1348: .data 0
+1349: .data 0
+1350: .data 0
+1351: .data 0
+1352: .data 0
+1353: .data 0
+1354: .data 0
+1355: .data 0
+1356: .data 0
+1357: .data 0
+1358: add @1 @0 @0
+1362: .data 0
+1363: .data 0
+1364: .data 0
+1365: .data 0
+1366: .data 0
+1367: .data 0
+1368: .data 0
+1369: .data 0
+1370: .data 0
+1371: .data 0
+1372: .data 0
+1373: .data 0
+1374: .data 0
+1375: .data 0
+1376: .data 0
+1377: .data 0
+1378: .data 0
+1379: .data 0
+1380: .data 0
+1381: .data 0
+1382: .data 0
+1383: .data 0
+1384: .data 0
+1385: .data 0
+1386: .data 0
+1387: .data 0
+1388: .data 0
+1389: .data 0
+1390: .data 0
+1391: .data 0
+1392: .data 0
+1393: .data 0
+1394: .data 0
+1395: .data 0
+1396: .data 0
+1397: .data 0
+1398: add @1 @0 @0
+1402: .data 0
+1403: .data 0
+1404: .data 0
+1405: .data 0
+1406: .data 0
+1407: .data 0
+1408: .data 0
+1409: .data 0
+1410: .data 0
+1411: .data 0
+1412: .data 0
+1413: .data 0
+1414: .data 0
+1415: .data 0
+1416: .data 0
+1417: .data 0
+1418: .data 0
+1419: inp @0
+1421: .data 0
+1422: .data 0
+1423: .data 0
+1424: .data 0
+1425: .data 0
+1426: .data 0
+1427: .data 0
+1428: .data 0
+1429: .data 0
+1430: .data 0
+1431: .data 0
+1432: .data 0
+1433: .data 0
+1434: .data 0
+1435: .data 0
+1436: .data 0
+1437: .data 0
+1438: add @1 @0 @0
+1442: .data 0
+1443: .data 0
+1444: .data 0
+1445: .data 0
+1446: .data 0
+1447: .data 0
+1448: .data 0
+1449: .data 0
+1450: .data 0
+1451: .data 0
+1452: .data 0
+1453: .data 0
+1454: .data 0
+1455: .data 0
+1456: .data 0
+1457: .data 0
+1458: .data 0
+1459: .data 0
+1460: .data 0
+1461: .data 0
+1462: .data 0
+1463: .data 0
+1464: .data 0
+1465: .data 0
+1466: .data 0
+1467: .data 0
+1468: .data 0
+1469: .data 0
+1470: .data 0
+1471: .data 0
+1472: .data 0
+1473: .data 0
+1474: .data 0
+1475: .data 0
+1476: .data 0
+1477: .data 0
+1478: add @55 @58 @16
+1482: 34 (invalid data!)
+1483: 73 (invalid data!)
+1484: 94 (invalid data!)
+1485: 65 (invalid data!)
+1486: 31 (invalid data!)
+1487: 91 (invalid data!)
+1488: 83 (invalid data!)
+1489: 29 (invalid data!)
+1490: 64 (invalid data!)
+1491: 87 (invalid data!)
+1492: 32 (invalid data!)
+1493: 19 (invalid data!)
+1494: 13 (invalid data!)
+1495: 15 (invalid data!)
+1496: 82 (invalid data!)
+1497: 19 (invalid data!)
+1498: 98 (invalid data!)
+1499: 37 (invalid data!)
+1500: 85 (invalid data!)
+1501: 58 (invalid data!)
+1502: 41 (invalid data!)
+1503: 63 (invalid data!)
+1504: 56 (invalid data!)
+1505: 69 (invalid data!)
+1506: 56 (invalid data!)
+1507: 69 (invalid data!)
+1508: 38 (invalid data!)
+1509: 60 (invalid data!)
+1510: 58 (invalid data!)
+1511: 83 (invalid data!)
+1512: out @45
+1514: 76 (invalid data!)
+1515: out @63
+1517: 23 (invalid data!)
+1518: 31 (invalid data!)
+1519: out @79
+1521: 69 (invalid data!)
+1522: 97 (invalid data!)
+1523: 22 (invalid data!)
+1524: 86 (invalid data!)
+1525: 51 (invalid data!)
+1526: 88 (invalid data!)
+1527: 96 (invalid data!)
+1528: mul @39 @88 @53
+1532: 49 (invalid data!)
+1533: 70 (invalid data!)
+1534: 45 (invalid data!)
+1535: 49 (invalid data!)
+1536: 28 (invalid data!)
+1537: eq? @64 @81 @36
+1541: 84 (invalid data!)
+1542: eq? @47 @69 @56
+1546: add @82 @31 @94
+1550: 23 (invalid data!)
+1551: bnz @94 @17
+1554: 83 (invalid data!)
+1555: 46 (invalid data!)
+1556: 17 (invalid data!)
+1557: 18 (invalid data!)
+1558: 71 (invalid data!)
+1559: 90 (invalid data!)
+1560: 21 (invalid data!)
+1561: 30 (invalid data!)
+1562: 19 (invalid data!)
+1563: 35 (invalid data!)
+1564: 43 (invalid data!)
+1565: 90 (invalid data!)
+1566: 25 (invalid data!)
+1567: 82 (invalid data!)
+1568: 11 (invalid data!)
+1569: 39 (invalid data!)
+1570: 13 (invalid data!)
+1571: 94 (invalid data!)
+1572: 13 (invalid data!)
+1573: 68 (invalid data!)
+1574: 91 (invalid data!)
+1575: out @33
+1577: 21 (invalid data!)
+1578: 65 (invalid data!)
+1579: 86 (invalid data!)
+1580: 49 (invalid data!)
+1581: 17 (invalid data!)
+1582: 23 (invalid data!)
+1583: 92 (invalid data!)
+1584: 52 (invalid data!)
+1585: mul @44 @7 @47
+1589: 82 (invalid data!)
+1590: 36 (invalid data!)
+1591: 79 (invalid data!)
+1592: 52 (invalid data!)
+1593: 10 (invalid data!)
+1594: 53 (invalid data!)
+1595: 50 (invalid data!)
+1596: 21 (invalid data!)
+1597: 79 (invalid data!)
+1598: 94 (invalid data!)
+1599: 95 (invalid data!)
+1600: 13 (invalid data!)
+1601: 69 (invalid data!)
+1602: 74 (invalid data!)
+1603: 95 (invalid data!)
+1604: 26 (invalid data!)
+1605: lt? @18 @56 @21
+1609: rba @79
+1611: 84 (invalid data!)
+1612: 15 (invalid data!)
+1613: 56 (invalid data!)
+1614: 43 (invalid data!)
+1615: 60 (invalid data!)
+1616: 38 (invalid data!)
+1617: 85 (invalid data!)
+1618: 37 (invalid data!)
+1619: 93 (invalid data!)
+1620: 95 (invalid data!)
+1621: 96 (invalid data!)
+1622: 41 (invalid data!)
+1623: 54 (invalid data!)
+1624: 94 (invalid data!)
+1625: 71 (invalid data!)
+1626: bnz @59 @27
+1629: 69 (invalid data!)
+1630: 79 (invalid data!)
+1631: 52 (invalid data!)
+1632: 19 (invalid data!)
+1633: 58 (invalid data!)
+1634: 12 (invalid data!)
+1635: 85 (invalid data!)
+1636: 54 (invalid data!)
+1637: 87 (invalid data!)
+1638: 25 (invalid data!)
+1639: 94 (invalid data!)
+1640: lt? @19 @90 @54
+1644: 97 (invalid data!)
+1645: 13 (invalid data!)
+1646: 92 (invalid data!)
+1647: 80 (invalid data!)
+1648: 18 (invalid data!)
+1649: 39 (invalid data!)
+1650: 40 (invalid data!)
+1651: 31 (invalid data!)
+1652: 81 (invalid data!)
+1653: 76 (invalid data!)
+1654: 62 (invalid data!)
+1655: 53 (invalid data!)
+1656: 84 (invalid data!)
+1657: 82 (invalid data!)
+1658: 20 (invalid data!)
+1659: 64 (invalid data!)
+1660: 58 (invalid data!)
+1661: 65 (invalid data!)
+1662: out @18
+1664: 32 (invalid data!)
+1665: 38 (invalid data!)
+1666: 36 (invalid data!)
+1667: 66 (invalid data!)
+1668: 90 (invalid data!)
+1669: 97 (invalid data!)
+1670: 49 (invalid data!)
+1671: 59 (invalid data!)
+1672: lt? @89 @8 @2
+1676: 44 (invalid data!)
+1677: 60 (invalid data!)
+1678: 52 (invalid data!)
+1679: 80 (invalid data!)
+1680: 54 (invalid data!)
+1681: 85 (invalid data!)
+1682: eq? @81 @2 @34
+1686: 21 (invalid data!)
+1687: mul @48 @55 @51
+1691: 81 (invalid data!)
+1692: 67 (invalid data!)
+1693: 50 (invalid data!)
+1694: 93 (invalid data!)
+1695: 92 (invalid data!)
+1696: 25 (invalid data!)
+1697: 77 (invalid data!)
+1698: 54 (invalid data!)
+1699: 74 (invalid data!)
+1700: 37 (invalid data!)
+1701: 92 (invalid data!)
+1702: 18 (invalid data!)
+1703: 52 (invalid data!)
+1704: 27 (invalid data!)
+1705: 14 (invalid data!)
+1706: 41 (invalid data!)
+1707: 11 (invalid data!)
+1708: 32 (invalid data!)
+1709: 65 (invalid data!)
+1710: 11 (invalid data!)
+1711: 76 (invalid data!)
+1712: 44 (invalid data!)
+1713: 58 (invalid data!)
+1714: 48 (invalid data!)
+1715: 61 (invalid data!)
+1716: 65 (invalid data!)
+1717: 66 (invalid data!)
+1718: 62 (invalid data!)
+1719: 48 (invalid data!)
+1720: 47 (invalid data!)
+1721: 76 (invalid data!)
+1722: 12 (invalid data!)
+1723: 68 (invalid data!)
+1724: 73 (invalid data!)
+1725: 54 (invalid data!)
+1726: 42 (invalid data!)
+1727: 89 (invalid data!)
+1728: 36 (invalid data!)
+1729: 73 (invalid data!)
+1730: bnz @78 @72
+1733: inp @77
+1735: out @46
+1737: 68 (invalid data!)
+1738: 73 (invalid data!)
+1739: 75 (invalid data!)
+1740: 86 (invalid data!)
+1741: 77 (invalid data!)
+1742: 69 (invalid data!)
+1743: 65 (invalid data!)
+1744: 13 (invalid data!)
+1745: mul @97 @46 @98
+1749: 39 (invalid data!)
+1750: 45 (invalid data!)
+1751: 32 (invalid data!)
+1752: 57 (invalid data!)
+1753: 49 (invalid data!)
+1754: inp @24
+1756: 14 (invalid data!)
+1757: 12 (invalid data!)
+1758: 95 (invalid data!)
+1759: 92 (invalid data!)
+1760: 10 (invalid data!)
+1761: 94 (invalid data!)
+1762: 83 (invalid data!)
+1763: 24 (invalid data!)
+1764: 73 (invalid data!)
+1765: 97 (invalid data!)
+1766: 35 (invalid data!)
+1767: 67 (invalid data!)
+1768: mul @63 @42 @1
+1772: 44 (invalid data!)
+1773: 46 (invalid data!)
+1774: 41 (invalid data!)
+1775: 76 (invalid data!)
+1776: 96 (invalid data!)
+1777: 66 (invalid data!)
+1778: 82 (invalid data!)
+1779: 18 (invalid data!)
+1780: lt? @13 @2 @69
+1784: 77 (invalid data!)
+1785: 63 (invalid data!)
+1786: 12 (invalid data!)
+1787: 74 (invalid data!)
+1788: 70 (invalid data!)
+1789: 22 (invalid data!)
+1790: 60 (invalid data!)
+1791: 34 (invalid data!)
+1792: 16 (invalid data!)
+1793: 71 (invalid data!)
+1794: 10 (invalid data!)
+1795: 40 (invalid data!)
+1796: 82 (invalid data!)
+1797: 35 (invalid data!)
+1798: 88 (invalid data!)
+1799: 27 (invalid data!)
+1800: 41 (invalid data!)
+1801: 86 (invalid data!)
+1802: 44 (invalid data!)
+1803: 33 (invalid data!)
+1804: 49 (invalid data!)
+1805: 98 (invalid data!)
+1806: 78 (invalid data!)
+1807: 33 (invalid data!)
+1808: 35 (invalid data!)
+1809: 76 (invalid data!)
+1810: 47 (invalid data!)
+1811: 69 (invalid data!)
+1812: 61 (invalid data!)
+1813: 46 (invalid data!)
+1814: 81 (invalid data!)
+1815: 79 (invalid data!)
+1816: 35 (invalid data!)
+1817: 68 (invalid data!)
+1818: 40 (invalid data!)
+1819: 28 (invalid data!)
+1820: 92 (invalid data!)
+1821: 18 (invalid data!)
+1822: 22 (invalid data!)
+1823: 24 (invalid data!)
+1824: 74 (invalid data!)
+1825: rba @92
+1827: 18 (invalid data!)
+1828: 16 (invalid data!)
+1829: 40 (invalid data!)
+1830: 26 (invalid data!)
+1831: 47 (invalid data!)
+1832: 90 (invalid data!)
+1833: 61 (invalid data!)
+1834: 26 (invalid data!)
+1835: 29 (invalid data!)
+1836: 30 (invalid data!)
+1837: 72 (invalid data!)
+1838: 97 (invalid data!)
+1839: lt? @44 @93 @61
+1843: 66 (invalid data!)
+1844: 74 (invalid data!)
+1845: 41 (invalid data!)
+1846: 79 (invalid data!)
+1847: 46 (invalid data!)
+1848: 47 (invalid data!)
+1849: 92 (invalid data!)
+1850: 87 (invalid data!)
+1851: mul @77 @25 @67
+1855: 91 (invalid data!)
+1856: 67 (invalid data!)
+1857: 96 (invalid data!)
+1858: 66 (invalid data!)
+1859: 43 (invalid data!)
+1860: 23 (invalid data!)
+1861: 44 (invalid data!)
+1862: 83 (invalid data!)
+1863: 74 (invalid data!)
+1864: 90 (invalid data!)
+1865: 32 (invalid data!)
+1866: 18 (invalid data!)
+1867: 28 (invalid data!)
+1868: 70 (invalid data!)
+1869: 77 (invalid data!)
+1870: 31 (invalid data!)
+1871: mul @22 @54 @59
+1875: 28 (invalid data!)
+1876: 44 (invalid data!)
+1877: 15 (invalid data!)
+1878: 15 (invalid data!)
+1879: 45 (invalid data!)
+1880: 33 (invalid data!)
+1881: 96 (invalid data!)
+1882: 23 (invalid data!)
+1883: 67 (invalid data!)
+1884: 69 (invalid data!)
+1885: 24 (invalid data!)
+1886: 63 (invalid data!)
+1887: 10 (invalid data!)
+1888: 72 (invalid data!)
+1889: 44 (invalid data!)
+1890: 96 (invalid data!)
+1891: 43 (invalid data!)
+1892: 77 (invalid data!)
+1893: 66 (invalid data!)
+1894: 53 (invalid data!)
+1895: 41 (invalid data!)
+1896: 63 (invalid data!)
+1897: 21 (invalid data!)
+1898: 64 (invalid data!)
+1899: 46 (invalid data!)
+1900: 52 (invalid data!)
+1901: 84 (invalid data!)
+1902: 70 (invalid data!)
+1903: 35 (invalid data!)
+1904: 21 (invalid data!)
+1905: 85 (invalid data!)
+1906: 30 (invalid data!)
+1907: 69 (invalid data!)
+1908: 64 (invalid data!)
+1909: 62 (invalid data!)
+1910: 92 (invalid data!)
+1911: 83 (invalid data!)
+1912: 42 (invalid data!)
+1913: 56 (invalid data!)
+1914: 74 (invalid data!)
+1915: 91 (invalid data!)
+1916: 51 (invalid data!)
+1917: 52 (invalid data!)
+1918: 12 (invalid data!)
+1919: 45 (invalid data!)
+1920: 18 (invalid data!)
+1921: 13 (invalid data!)
+1922: 56 (invalid data!)
+1923: 64 (invalid data!)
+1924: 61 (invalid data!)
+1925: 94 (invalid data!)
+1926: 35 (invalid data!)
+1927: 46 (invalid data!)
+1928: 62 (invalid data!)
+1929: 74 (invalid data!)
+1930: 82 (invalid data!)
+1931: 39 (invalid data!)
+1932: 67 (invalid data!)
+1933: 43 (invalid data!)
+1934: 94 (invalid data!)
+1935: lt? @39 @15 @41
+1939: 98 (invalid data!)
+1940: 51 (invalid data!)
+1941: 57 (invalid data!)
+1942: 35 (invalid data!)
+1943: 83 (invalid data!)
+1944: 36 (invalid data!)
+1945: 55 (invalid data!)
+1946: eq? @56 @77 @22
+1950: 45 (invalid data!)
+1951: 51 (invalid data!)
+1952: 88 (invalid data!)
+1953: 72 (invalid data!)
+1954: 71 (invalid data!)
+1955: 73 (invalid data!)
+1956: 41 (invalid data!)
+1957: 31 (invalid data!)
+1958: 79 (invalid data!)
+1959: 40 (invalid data!)
+1960: 60 (invalid data!)
+1961: 50 (invalid data!)
+1962: 26 (invalid data!)
+1963: 67 (invalid data!)
+1964: 75 (invalid data!)
+1965: 57 (invalid data!)
+1966: 75 (invalid data!)
+1967: 50 (invalid data!)
+1968: 12 (invalid data!)
+1969: 63 (invalid data!)
+1970: 56 (invalid data!)
+1971: 38 (invalid data!)
+1972: 16 (invalid data!)
+1973: 47 (invalid data!)
+1974: 46 (invalid data!)
+1975: 11 (invalid data!)
+1976: 56 (invalid data!)
+1977: 96 (invalid data!)
+1978: 66 (invalid data!)
+1979: 58 (invalid data!)
+1980: lt? @8 @21 @70
+1984: 28 (invalid data!)
+1985: 30 (invalid data!)
+1986: 29 (invalid data!)
+1987: 52 (invalid data!)
+1988: 97 (invalid data!)
+1989: 48 (invalid data!)
+1990: 12 (invalid data!)
+1991: brz @21 @80
+1994: 67 (invalid data!)
+1995: out @2
+1997: 17 (invalid data!)
+1998: 40 (invalid data!)
+1999: 33 (invalid data!)
+2000: 54 (invalid data!)
+2001: 52 (invalid data!)
+2002: 36 (invalid data!)
+2003: 90 (invalid data!)
+2004: 64 (invalid data!)
+2005: 23 (invalid data!)
+2006: 81 (invalid data!)
+2007: 69 (invalid data!)
+2008: 95 (invalid data!)
+2009: 23 (invalid data!)
+2010: 38 (invalid data!)
+2011: 19 (invalid data!)
+2012: 46 (invalid data!)
+2013: 26 (invalid data!)
+2014: 16 (invalid data!)
+2015: 21 (invalid data!)
+2016: 54 (invalid data!)
+2017: 50 (invalid data!)
+2018: 13 (invalid data!)
+2019: 95 (invalid data!)
+2020: 59 (invalid data!)
+2021: 68 (invalid data!)
+2022: 40 (invalid data!)
+2023: 97 (invalid data!)
+2024: 68 (invalid data!)
+2025: 31 (invalid data!)
+2026: 13 (invalid data!)
+2027: 49 (invalid data!)
+2028: 59 (invalid data!)
+2029: 15 (invalid data!)
+2030: 57 (invalid data!)
+2031: 29 (invalid data!)
+2032: 23 (invalid data!)
+2033: 35 (invalid data!)
+2034: 43 (invalid data!)
+2035: 31 (invalid data!)
+2036: 70 (invalid data!)
+2037: lt? @74 @8 @4
+2041: 61 (invalid data!)
+2042: 18 (invalid data!)
+2043: 82 (invalid data!)
+2044: 43 (invalid data!)
+2045: out @58
+2047: 12 (invalid data!)
+2048: 66 (invalid data!)
+2049: 69 (invalid data!)
+2050: 23 (invalid data!)
+2051: 43 (invalid data!)
+2052: 31 (invalid data!)
+2053: 16 (invalid data!)
+2054: rba @61
+2056: 90 (invalid data!)
+2057: 69 (invalid data!)
+2058: 80 (invalid data!)
+2059: 82 (invalid data!)
+2060: 66 (invalid data!)
+2061: 81 (invalid data!)
+2062: 21 (invalid data!)
+2063: 24 (invalid data!)
+2064: bnz @37 @70
+2067: 30 (invalid data!)
+2068: 44 (invalid data!)
+2069: 92 (invalid data!)
+2070: 42 (invalid data!)
+2071: 41 (invalid data!)
+2072: 27 (invalid data!)
+2073: 28 (invalid data!)
+2074: 58 (invalid data!)
+2075: 91 (invalid data!)
+2076: 19 (invalid data!)
+2077: 53 (invalid data!)
+2078: 51 (invalid data!)
+2079: bnz @95 @31
+2082: 98 (invalid data!)
+2083: 84 (invalid data!)
+2084: brz @62 @30
+2087: 36 (invalid data!)
+2088: 26 (invalid data!)
+2089: 26 (invalid data!)
+2090: bnz @95 @50
+2093: 16 (invalid data!)
+2094: 19 (invalid data!)
+2095: 10 (invalid data!)
+2096: 50 (invalid data!)
+2097: 10 (invalid data!)
+2098: 44 (invalid data!)
+2099: 96 (invalid data!)
+2100: 80 (invalid data!)
+2101: 39 (invalid data!)
+2102: 96 (invalid data!)
+2103: 28 (invalid data!)
+2104: 87 (invalid data!)
+2105: 94 (invalid data!)
+2106: 47 (invalid data!)
+2107: 79 (invalid data!)
+2108: 92 (invalid data!)
+2109: 47 (invalid data!)
+2110: eq? @86 @54 @38
+2114: 49 (invalid data!)
+2115: 87 (invalid data!)
+2116: 96 (invalid data!)
+2117: 78 (invalid data!)
+2118: 66 (invalid data!)
+2119: 86 (invalid data!)
+2120: brz @77 @55
+2123: 11 (invalid data!)
+2124: 82 (invalid data!)
+2125: 73 (invalid data!)
+2126: 22 (invalid data!)
+2127: 75 (invalid data!)
+2128: add @11 @83 @20
+2132: eq? @27 @64 @24
+2136: 38 (invalid data!)
+2137: 11 (invalid data!)
+2138: 23 (invalid data!)
+2139: 43 (invalid data!)
+2140: 68 (invalid data!)
+2141: 60 (invalid data!)
+2142: 52 (invalid data!)
+2143: 45 (invalid data!)
+2144: 44 (invalid data!)
+2145: 67 (invalid data!)
+2146: 35 (invalid data!)
+2147: 77 (invalid data!)
+2148: 57 (invalid data!)
+2149: add @96 @6 @57
+2153: 28 (invalid data!)
+2154: 52 (invalid data!)
+2155: 97 (invalid data!)
+2156: 27 (invalid data!)
+2157: 55 (invalid data!)
+2158: 64 (invalid data!)
+2159: 94 (invalid data!)
+2160: 96 (invalid data!)
+2161: 23 (invalid data!)
+2162: 11 (invalid data!)
+2163: rba @37
+2165: 70 (invalid data!)
+2166: 15 (invalid data!)
+2167: 35 (invalid data!)
+2168: 36 (invalid data!)
+2169: 58 (invalid data!)
+2170: 34 (invalid data!)
+2171: 34 (invalid data!)
+2172: 16 (invalid data!)
+2173: 69 (invalid data!)
+2174: 69 (invalid data!)
+2175: 82 (invalid data!)
+2176: 62 (invalid data!)
+2177: 88 (invalid data!)
+2178: 91 (invalid data!)
+2179: 29 (invalid data!)
+2180: 31 (invalid data!)
+2181: 95 (invalid data!)
+2182: 35 (invalid data!)
+2183: 54 (invalid data!)
+2184: 61 (invalid data!)
+2185: 12 (invalid data!)
+2186: 23 (invalid data!)
+2187: 76 (invalid data!)
+2188: 26 (invalid data!)
+2189: add @33 @51 @41
+2193: 45 (invalid data!)
+2194: 74 (invalid data!)
+2195: 80 (invalid data!)
+2196: brz @36 @93
+2199: 13 (invalid data!)
+2200: 26 (invalid data!)
+2201: 81 (invalid data!)
+2202: 79 (invalid data!)
+2203: bnz @54 @17
+2206: 27 (invalid data!)
+2207: 51 (invalid data!)
+2208: 15 (invalid data!)
+2209: 52 (invalid data!)
+2210: 36 (invalid data!)
+2211: 31 (invalid data!)
+2212: bnz @62 @70
+2215: 21 (invalid data!)
+2216: 87 (invalid data!)
+2217: 76 (invalid data!)
+2218: 55 (invalid data!)
+2219: 26 (invalid data!)
+2220: 59 (invalid data!)
+2221: 81 (invalid data!)
+2222: 88 (invalid data!)
+2223: 90 (invalid data!)
+2224: out @40
+2226: 94 (invalid data!)
+2227: 55 (invalid data!)
+2228: 36 (invalid data!)
+2229: 32 (invalid data!)
+2230: 94 (invalid data!)
+2231: 62 (invalid data!)
+2232: 73 (invalid data!)
+2233: 43 (invalid data!)
+2234: mul @39 @77 @51
+2238: 28 (invalid data!)
+2239: 24 (invalid data!)
+2240: 69 (invalid data!)
+2241: 21 (invalid data!)
+2242: 66 (invalid data!)
+2243: 43 (invalid data!)
+2244: 14 (invalid data!)
+2245: 74 (invalid data!)
+2246: 10 (invalid data!)
+2247: 46 (invalid data!)
+2248: 33 (invalid data!)
+2249: add @29 @74 @2
+2253: 33 (invalid data!)
+2254: 68 (invalid data!)
+2255: 68 (invalid data!)
+2256: 72 (invalid data!)
+2257: 21 (invalid data!)
+2258: 51 (invalid data!)
+2259: 91 (invalid data!)
+2260: 82 (invalid data!)
+2261: add @69 @80 @78
+2265: 69 (invalid data!)
+2266: lt? @14 @43 @25
+2270: 10 (invalid data!)
+2271: 69 (invalid data!)
+2272: 27 (invalid data!)
+2273: 13 (invalid data!)
+2274: 90 (invalid data!)
+2275: 50 (invalid data!)
+2276: 28 (invalid data!)
+2277: 21 (invalid data!)
+2278: 40 (invalid data!)
+2279: 16 (invalid data!)
+2280: 68 (invalid data!)
+2281: 58 (invalid data!)
+2282: brz @23 @87
+2285: brz @74 @9
+2288: 91 (invalid data!)
+2289: 25 (invalid data!)
+2290: 98 (invalid data!)
+2291: 58 (invalid data!)
+2292: 47 (invalid data!)
+2293: 91 (invalid data!)
+2294: inp @38
+2296: inp @91
+2298: out @28
+2300: 84 (invalid data!)
+2301: 12 (invalid data!)
+2302: mul @54 @92 @27
+2306: 81 (invalid data!)
+2307: 13 (invalid data!)
+2308: 33 (invalid data!)
+2309: 89 (invalid data!)
+2310: 38 (invalid data!)
+2311: add @64 @91 @21
+2315: lt? @41 @74 @74
+2319: 92 (invalid data!)
