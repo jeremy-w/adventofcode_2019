@@ -6,6 +6,7 @@ You just need to know how much ORE you'll need to collect before you can produce
 Each reaction gives specific quantities for its inputs and output; reactions cannot be partially run, so only whole integer multiples of these quantities can be used. (It's okay to have leftover chemicals when you're done, though.) For example, the reaction 1 A, 2 B, 3 C => 2 D means that exactly 2 units of chemical D can be produced by consuming exactly 1 A, 2 B and 3 C. You can run the full reaction as many times as necessary; for example, you could produce 10 D by consuming 5 A, 10 B, and 15 C.
 ]#
 import deques
+import math
 import sequtils
 import strformat
 import strutils
@@ -53,22 +54,35 @@ func toReactions(text: string): seq[Reaction] =
   .mapIt(it.toReaction)
 
 func findOreForUnitFuel(rs: Reactions): int =
-  var outputToInputs = initTable[Chemical, seq[Chemical]]()
+  var outputToInputs = initTable[Chemical, tuple[qty: int, inputs: seq[Amt]]]()
   for r in rs:
-    outputToInputs[r.output.chem] = r.inputs.mapIt it.chem
-  var queue = initDeque[Chemical]()
-  queue.addLast Goal
-  var steps = 0
+    outputToInputs[r.output.chem] = (qty: r.output.qty, inputs: r.inputs)
+  var queue = initDeque[tuple[qty: float, chem: Chemical]]()
+  queue.addLast (qty: 1.0, chem: Goal)
+  var precursorAmounts = initTable[Chemical, float]()
+  func isPrecursor(ch: Chemical): auto =
+    outputToInputs[ch].inputs.allIt(it.chem == RawInput)
   while queue.len > 0:
     var next = queue.popFirst
-    inc steps
     debugEcho "making ", next
-    if next == RawInput:
+    if next.chem.isPrecursor:
+      var needed = precursorAmounts.getOrDefault(next.chem, 0)
+      needed += next.qty
+      precursorAmounts[next.chem] = needed
       continue
-    for c in outputToInputs[next]:
-      debugEcho "  needs ", c
-      queue.addLast c
-  return steps
+    let (qty, inputs) = outputToInputs[next.chem]
+    let multiple = next.qty / qty.toFloat
+    for amt in inputs:
+      debugEcho "  needs ", amt
+      queue.addLast (qty: multiple*amt.qty.toFloat, chem: amt.chem)
+  debugEcho "required precursors: ", precursorAmounts
+  var ore = 0.0
+  for precursor, amount in precursorAmounts:
+    let (qty, inputs) = outputToInputs[precursor]
+    let multiple = ceil(amount / qty.toFloat)
+    debugEcho &"need to run {precursor}'s reaction {multiple} times"
+    ore += multiple * inputs[0].qty.toFloat
+  return ore.int
 
 const ex1 = """10 ORE => 10 A
 1 ORE => 1 B
@@ -100,6 +114,7 @@ const ex2 = """9 ORE => 2 A
 4 C, 1 A => 1 CA
 2 AB, 3 BC, 4 CA => 1 FUEL""".toReactions
 echo &"ex2 is: {ex2}"
+doAssert ex2.findOreForUnitFuel == 165
 
 #[
 The above list of reactions requires 165 ORE to produce 1 FUEL:
@@ -163,4 +178,7 @@ Here are some larger examples:
 
 Given the list of reactions in your puzzle input, what is the minimum amount of ORE required to produce exactly 1 FUEL?
 ]#
-echo "ORE per FUEL is: ???"
+
+const day14 = readFile("input/day14.txt").toReactions
+let part1 = day14.findOreForUnitFuel
+echo &"ORE per FUEL is: {part1}"
