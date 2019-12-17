@@ -57,9 +57,9 @@ func findOreForUnitFuel(rs: Reactions): int =
   var outputToInputs = initTable[Chemical, tuple[qty: int, inputs: seq[Amt]]]()
   for r in rs:
     outputToInputs[r.output.chem] = (qty: r.output.qty, inputs: r.inputs)
-  var queue = initDeque[tuple[qty: float, chem: Chemical]]()
+  var queue = initDeque[tuple[qty: float64, chem: Chemical]]()
   queue.addLast (qty: 1.0, chem: Goal)
-  var precursorAmounts = initTable[Chemical, float]()
+  var precursorAmounts = initTable[Chemical, float64]()
   func isPrecursor(ch: Chemical): auto =
     outputToInputs[ch].inputs.allIt(it.chem == RawInput)
   while queue.len > 0:
@@ -71,19 +71,20 @@ func findOreForUnitFuel(rs: Reactions): int =
       precursorAmounts[next.chem] = needed
       continue
     let (qty, inputs) = outputToInputs[next.chem]
-    let multiple = next.qty / qty.toFloat
+    let multiple = next.qty / qty.toBiggestFloat
     for amt in inputs:
       debugEcho "  needs ", amt
-      queue.addLast (qty: multiple*amt.qty.toFloat, chem: amt.chem)
+      queue.addLast (qty: multiple*amt.qty.toBiggestFloat, chem: amt.chem)
   debugEcho "required precursors: ", precursorAmounts
   var ore = 0.0
   for precursor, amount in precursorAmounts:
     let (qty, inputs) = outputToInputs[precursor]
-    let multiple = ceil(amount / qty.toFloat)
+    let multiple = ceil(amount / qty.toBiggestFloat)
     debugEcho &"need to run {precursor}'s reaction {multiple} times"
-    ore += multiple * inputs[0].qty.toFloat
+    ore += multiple * inputs[0].qty.toBiggestFloat
   return ore.int
 
+echo "\pExample 1"
 const ex1 = """10 ORE => 10 A
 1 ORE => 1 B
 7 A, 1 B => 1 C
@@ -106,6 +107,7 @@ Or, suppose you have the following list of reactions:
 
 ]#
 
+echo "\pExample 2"
 const ex2 = """9 ORE => 2 A
 8 ORE => 3 B
 7 ORE => 5 C
@@ -130,8 +132,10 @@ The above list of reactions requires 165 ORE to produce 1 FUEL:
 Here are some larger examples:
 
     13312 ORE for 1 FUEL:
+]#
 
-    157 ORE => 5 NZVS
+echo "\pExample 3"
+let ex3 = """157 ORE => 5 NZVS
     165 ORE => 6 DCFZ
     44 XJWVT, 5 KHKGT, 1 QDVJ, 29 NZVS, 9 GPVTF, 48 HKGWZ => 1 FUEL
     12 HKGWZ, 1 GPVTF, 8 PSHF => 9 QDVJ
@@ -139,8 +143,10 @@ Here are some larger examples:
     177 ORE => 5 HKGWZ
     7 DCFZ, 7 PSHF => 2 XJWVT
     165 ORE => 2 GPVTF
-    3 DCFZ, 7 NZVS, 5 HKGWZ, 10 PSHF => 8 KHKGT
+    3 DCFZ, 7 NZVS, 5 HKGWZ, 10 PSHF => 8 KHKGT""".toReactions.findOreForUnitFuel
+doAssert ex3 == 13_312, &"got: {ex3}"
 
+#[
     180697 ORE for 1 FUEL:
 
     2 VPVL, 7 FWMGM, 2 CXFTF, 11 MNCFX => 1 STKFG
