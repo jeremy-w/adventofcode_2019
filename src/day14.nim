@@ -57,25 +57,33 @@ func findOreForUnitFuel(rs: Reactions): int =
   var outputToInputs = initTable[Chemical, tuple[qty: int, inputs: seq[Amt]]]()
   for r in rs:
     outputToInputs[r.output.chem] = (qty: r.output.qty, inputs: r.inputs)
-  var queue = initDeque[tuple[qty: float64, chem: Chemical]]()
-  queue.addLast (qty: 1.0, chem: Goal)
-  var precursorAmounts = initTable[Chemical, float64]()
+
   func isPrecursor(ch: Chemical): auto =
     outputToInputs[ch].inputs.allIt(it.chem == RawInput)
+  var precursorAmounts = initTable[Chemical, float64]()
+
+  var queue = initDeque[tuple[qty: float64, chem: Chemical]]()
+  queue.addLast (qty: 1.0, chem: Goal)
   while queue.len > 0:
     var next = queue.popFirst
     debugEcho "making ", next
+
     if next.chem.isPrecursor:
       var needed = precursorAmounts.getOrDefault(next.chem, 0)
       needed += next.qty
       precursorAmounts[next.chem] = needed
+      debugEcho "  it's a precursor"
       continue
+
     let (qty, inputs) = outputToInputs[next.chem]
-    let multiple = next.qty / qty.toBiggestFloat
+    let multiple = max(1.0, next.qty / qty.toBiggestFloat)
+    debugEcho &"  need to run {multiple} times, as reacting {inputs} produces {qty}"
     for amt in inputs:
-      debugEcho "  needs ", amt
-      queue.addLast (qty: multiple*amt.qty.toBiggestFloat, chem: amt.chem)
+      let needed = (qty: multiple*amt.qty.toBiggestFloat, chem: amt.chem)
+      debugEcho "    needs ", needed
+      queue.addLast needed
   debugEcho "required precursors: ", precursorAmounts
+
   var ore = 0.0
   for precursor, amount in precursorAmounts:
     let (qty, inputs) = outputToInputs[precursor]
