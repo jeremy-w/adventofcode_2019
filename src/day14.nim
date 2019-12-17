@@ -76,7 +76,9 @@ func findOreForUnitFuel(rs: Reactions): int =
       continue
 
     let (qty, inputs) = outputToInputs[next.chem]
-    let multiple = max(1.0, next.qty / qty.toBiggestFloat)
+    # Messing around with this multiple is pushing me over/under.
+    # I'm probably missing something about needing to actually track amounts available or something.
+    let multiple = ceil(next.qty / qty.toBiggestFloat)
     debugEcho &"  need to run {multiple} times, as reacting {inputs} produces {qty}"
     for amt in inputs:
       let needed = (qty: multiple*amt.qty.toBiggestFloat, chem: amt.chem)
@@ -138,8 +140,6 @@ The above list of reactions requires 165 ORE to produce 1 FUEL:
     Consume 2 AB, 3 BC, 4 CA to produce 1 FUEL.
 
 Here are some larger examples:
-
-    13312 ORE for 1 FUEL:
 ]#
 
 echo "\pExample 3"
@@ -154,9 +154,8 @@ let ex3 = """157 ORE => 5 NZVS
     3 DCFZ, 7 NZVS, 5 HKGWZ, 10 PSHF => 8 KHKGT""".toReactions.findOreForUnitFuel
 doAssert ex3 == 13_312, &"got: {ex3}"
 
-#[
-    180697 ORE for 1 FUEL:
-
+echo "\pExample 4 ~~~"
+let ex4 = """
     2 VPVL, 7 FWMGM, 2 CXFTF, 11 MNCFX => 1 STKFG
     17 NVRVD, 3 JNWZP => 8 VPVL
     53 STKFG, 6 MNCFX, 46 VJHF, 81 HVMC, 68 CXFTF, 25 GNMV => 1 FUEL
@@ -168,10 +167,11 @@ doAssert ex3 == 13_312, &"got: {ex3}"
     145 ORE => 6 MNCFX
     1 NVRVD => 8 CXFTF
     1 VJHF, 6 MNCFX => 4 RFSQX
-    176 ORE => 6 VJHF
+    176 ORE => 6 VJHF""".toReactions.findOreForUnitFuel
+doAssert ex4 == 180697, &"got: {ex4}"
 
-    2210736 ORE for 1 FUEL:
-
+echo "\pExample 5 ~~~"
+let ex5 = """
     171 ORE => 8 CNZTR
     7 ZLQW, 3 BMBT, 9 XCVML, 26 XMNCP, 1 WPTQ, 2 MZWV, 1 RJRHP => 4 PLWSL
     114 ORE => 4 BHXH
@@ -188,8 +188,10 @@ doAssert ex3 == 13_312, &"got: {ex3}"
     3 BHXH, 2 VRPVC => 7 MZWV
     121 ORE => 7 VRPVC
     7 XCVML => 6 RJRHP
-    5 BHXH, 4 VRPVC => 5 LTCX
+    5 BHXH, 4 VRPVC => 5 LTCX""".toReactions.findOreForUnitFuel
+doAssert ex5 == 2210736, &"got: {ex5}"
 
+#[
 Given the list of reactions in your puzzle input, what is the minimum amount of ORE required to produce exactly 1 FUEL?
 ]#
 
