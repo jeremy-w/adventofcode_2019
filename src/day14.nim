@@ -5,9 +5,11 @@ You just need to know how much ORE you'll need to collect before you can produce
 
 Each reaction gives specific quantities for its inputs and output; reactions cannot be partially run, so only whole integer multiples of these quantities can be used. (It's okay to have leftover chemicals when you're done, though.) For example, the reaction 1 A, 2 B, 3 C => 2 D means that exactly 2 units of chemical D can be produced by consuming exactly 1 A, 2 B and 3 C. You can run the full reaction as many times as necessary; for example, you could produce 10 D by consuming 5 A, 10 B, and 15 C.
 ]#
+import deques
 import sequtils
 import strformat
 import strutils
+import tables
 
 echo "== Day 14 =="
 echo "-- Part 1 --"
@@ -22,6 +24,8 @@ type
   Reaction = tuple
     inputs: seq[Amt]
     output: Amt
+
+  Reactions = seq[Reaction]
 
 const
   RawInput = "ORE".Chemical
@@ -48,6 +52,24 @@ func toReactions(text: string): seq[Reaction] =
   .filterIt(it.contains "=>")
   .mapIt(it.toReaction)
 
+func findOreForUnitFuel(rs: Reactions): int =
+  var outputToInputs = initTable[Chemical, seq[Chemical]]()
+  for r in rs:
+    outputToInputs[r.output.chem] = r.inputs.mapIt it.chem
+  var queue = initDeque[Chemical]()
+  queue.addLast Goal
+  var steps = 0
+  while queue.len > 0:
+    var next = queue.popFirst
+    inc steps
+    debugEcho "making ", next
+    if next == RawInput:
+      continue
+    for c in outputToInputs[next]:
+      debugEcho "  needs ", c
+      queue.addLast c
+  return steps
+
 const ex1 = """10 ORE => 10 A
 1 ORE => 1 B
 7 A, 1 B => 1 C
@@ -58,6 +80,13 @@ echo &"ex1 is: {ex1}"
 
 #[
 The first two reactions use only ORE as inputs; they indicate that you can produce as much of chemical A as you want (in increments of 10 units, each 10 costing 10 ORE) and as much of chemical B as you want (each costing 1 ORE). To produce 1 FUEL, a total of 31 ORE is required: 1 ORE to produce 1 B, then 30 more ORE to produce the 7 + 7 + 7 + 7 = 28 A (with 2 extra A wasted) required in the reactions to convert the B into C, C into D, D into E, and finally E into FUEL. (30 A is produced because its reaction requires that it is created in increments of 10.)
+
+]#
+
+let r1 = ex1.findOreForUnitFuel
+doAssert r1 == 31, &"got: {r1}"
+
+#[
 
 Or, suppose you have the following list of reactions:
 
