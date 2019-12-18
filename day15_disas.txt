@@ -1,0 +1,907 @@
+0: inp @1033(MoveCmd)
+
+; north
+2: eq? @1033(MoveCmd) #1 @1032(CmpResult)
+6: bnz @1032(CmpResult) #31
+
+; south
+9: eq? @1033(MoveCmd) #2 @1032(CmpResult)
+13: bnz @1032(CmpResult) #58
+
+; west
+16: eq? @1033(MoveCmd) #3 @1032(CmpResult)
+20: bnz @1032(CmpResult) #81
+
+; east
+23: eq? @1033(MoveCmd) #4 @1032(CmpResult)
+27: bnz @1032(CmpResult) #104
+
+; bogus input
+30: hlt
+
+; sec: move north
+31: mul @1034(CurrCol) #1 @1039(MoveCol)
+35: mul @1036 #1 @1041
+39: add @1035(CurrRow) #-1 @1040(MoveRow)  ; move up a line
+43: eq? @1038 #0 @1043
+47: mul #-1 @1043 @1032(CmpResult)
+51: add @1037 @1032(CmpResult) @1042
+55: bnz #1 #124
+
+; sec: move south
+58: add @1034(CurrCol) #0 @1039(MoveCol)
+62: add @1036 #0 @1041
+66: add @1035(CurrRow) #1 @1040(MoveRow)  ; move down a line
+70: eq? @1038 #0 @1043
+74: add @1037 @1038 @1042
+78: bnz #1 #124
+
+; sec: move west
+81: add @1034(CurrCol) #-1 @1039(MoveCol)
+85: eq? @1036 #0 @1041
+89: mul @1035(CurrRow) #1 @1040(MoveRow)
+93: add @1038 #0 @1043
+97: mul @1037 #1 @1042
+101: bnz #1 #124
+
+; sec: move east
+104: add @1034(CurrCol) #1 @1039(MoveCol)
+108: eq? @1036 #0 @1041
+112: mul @1035(CurrRow) #1 @1040(MoveRow)
+116: add @1038 #0 @1043
+120: add #0 @1037 @1042
+
+; sec: post-move
+; handle hitting the edges of the 40x40 grid
+; var: 1039 and 1040 are the intended col and row
+; var: 1034 and 1035 are the current col and row
+124: brz @1039(MoveCol) #217
+127: brz @1040(MoveRow) #217
+130: eq? @1039(MoveCol) #40 @1032(CmpResult)
+134: bnz @1032(CmpResult) #217
+137: eq? @1040(MoveRow) #40 @1032(CmpResult)
+141: bnz @1032(CmpResult) #217
+
+; sec: report if found oxygen
+144: eq? @1039(MoveCol) #3 @1032(CmpResult)
+148: brz @1032(CmpResult) #165
+151: eq? @1040(MoveRow) #5 @1032(CmpResult)
+155: brz @1032(CmpResult) #165
+158: add #2 #0 @1044(StatusReply)  ; StatusReply = FoundIt at (3, 5)
+162: bnz #1 #224
+
+; sec: not oxygen
+165: mul @1041 @1043 @1032(CmpResult)
+169: brz @1032(CmpResult) #179
+
+172: mul #1 #1 @1044(StatusReply)  ; report DidMove
+176: bnz #1 #224
+
+179: add @1041 @1043 @1032(CmpResult)
+183: brz @1032(CmpResult) #217  ; hit wall
+
+; sec: table lookup
+186: add @1042 @1043 @1032(CmpResult)
+190: add @1032(CmpResult) #-1 @1032(CmpResult)
+194: mul @1032(CmpResult) #39 @1032(CmpResult)
+198: add @1032(CmpResult) @1039(MoveCol) @1032(CmpResult)
+202: add #-1 @1032(CmpResult) @1032(CmpResult)
+206: add #252 @1032(CmpResult) @211
+210: lt? @COMPUTED #55 @1044(StatusReply)  ; wall if <55, didMove otherwise
+214: brz #0 #224
+
+; sec: report hitting wall. hit the edge of the grid (can't enter 0 or 40) or a wall tile.
+; var: 1044 is the output. here it also functions as a "would we already hit a wall" flag.
+217: mul #0 #1 @1044(StatusReply)  ; load "hit wall"
+221: bnz #1 #224
+
+; sec: did not hit edge of grid
+224: brz @1044(StatusReply) #247  ; if wall, just output; otherwise, apply move
+
+227: mul #1 @1039(MoveCol) @1034(CurrCol)
+231: mul #1 @1040(MoveRow) @1035(CurrRow)
+; shift: 1036 := 1041; 1037 := 1042; 1038 := 1043
+235: mul #1 @1041 @1036
+239: mul @1043 #1 @1038
+243: add #0 @1042 @1037
+
+247: out @1044(StatusReply)
+249: brz #0 #0
+
+; sec: maze table - <55 is a wall. 780 values.
+; lookup is driven by some sort of stateful number generator
+252: .data 5
+253: .data 20
+254: .data 51
+255: .data 81
+256: .data 57
+257: .data 10
+258: .data 21
+259: .data 4
+260: .data 5
+261: .data 12
+262: .data 94
+263: .data 86
+264: .data 11
+265: .data 35
+266: .data 82
+267: .data 29
+268: .data 14
+269: .data 52
+270: .data 78
+271: .data 53
+272: .data 41
+273: .data 88
+274: .data 58
+275: .data 48
+276: .data 50
+277: .data 16
+278: .data 2
+279: .data 36
+280: .data 58
+281: .data 7
+282: .data 93
+283: .data 31
+284: .data 1
+285: .data 99
+286: .data 43
+287: .data 9
+288: .data 47
+289: .data 67
+290: .data 54
+291: .data 39
+292: .data 78
+293: .data 89
+294: .data 3
+295: .data 17
+296: .data 63
+297: .data 95
+298: .data 70
+299: .data 84
+300: .data 41
+301: .data 59
+302: .data 32
+303: .data 80
+304: .data 35
+305: .data 7
+306: .data 91
+307: .data 36
+308: .data 80
+309: .data 66
+310: .data 28
+311: .data 78
+312: .data 20
+313: .data 26
+314: .data 68
+315: .data 69
+316: .data 59
+317: .data 14
+318: .data 90
+319: .data 22
+320: .data 31
+321: .data 86
+322: .data 16
+323: .data 67
+324: .data 67
+325: .data 45
+326: .data 77
+327: .data 29
+328: .data 61
+329: .data 44
+330: .data 44
+331: .data 77
+332: .data 52
+333: .data 81
+334: .data 54
+335: .data 66
+336: .data 15
+337: .data 43
+338: .data 95
+339: .data 13
+340: .data 22
+341: .data 79
+342: .data 80
+343: .data 37
+344: .data 90
+345: .data 65
+346: .data 58
+347: .data 11
+348: .data 14
+349: .data 80
+350: .data 82
+351: .data 42
+352: .data 84
+353: .data 47
+354: .data 71
+355: .data 14
+356: .data 94
+357: .data 78
+358: .data 24
+359: .data 71
+360: .data 25
+361: .data 6
+362: .data 11
+363: .data 71
+364: .data 47
+365: .data 86
+366: .data 20
+367: .data 97
+368: .data 37
+369: .data 18
+370: .data 92
+371: .data 57
+372: .data 15
+373: .data 98
+374: .data 44
+375: .data 78
+376: .data 91
+377: .data 44
+378: .data 83
+379: .data 59
+380: .data 4
+381: .data 12
+382: .data 87
+383: .data 3
+384: .data 12
+385: .data 14
+386: .data 86
+387: .data 70
+388: .data 19
+389: .data 31
+390: .data 72
+391: .data 29
+392: .data 12
+393: .data 22
+394: .data 23
+395: .data 73
+396: .data 61
+397: .data 91
+398: .data 40
+399: .data 66
+400: .data 68
+401: .data 66
+402: .data 16
+403: .data 73
+404: .data 59
+405: .data 41
+406: .data 83
+407: .data 8
+408: .data 7
+409: .data 48
+410: .data 61
+411: .data 54
+412: .data 95
+413: .data 2
+414: .data 25
+415: .data 61
+416: .data 13
+417: .data 17
+418: .data 76
+419: .data 85
+420: .data 96
+421: .data 16
+422: .data 79
+423: .data 84
+424: .data 39
+425: .data 96
+426: .data 49
+427: .data 24
+428: .data 67
+429: .data 88
+430: .data 88
+431: .data 88
+432: .data 66
+433: .data 46
+434: .data 52
+435: .data 54
+436: .data 71
+437: .data 47
+438: .data 63
+439: .data 84
+440: .data 4
+441: .data 33
+442: .data 7
+443: .data 63
+444: .data 84
+445: .data 27
+446: .data 6
+447: .data 26
+448: .data 76
+449: .data 70
+450: .data 29
+451: .data 49
+452: .data 93
+453: .data 31
+454: .data 63
+455: .data 64
+456: .data 26
+457: .data 16
+458: .data 40
+459: .data 60
+460: .data 30
+461: .data 60
+462: .data 10
+463: .data 85
+464: .data 85
+465: .data 62
+466: .data 32
+467: .data 4
+468: .data 98
+469: .data 39
+470: .data 20
+471: .data 1
+472: .data 85
+473: .data 98
+474: .data 48
+475: .data 29
+476: .data 24
+477: .data 74
+478: .data 30
+479: .data 92
+480: .data 90
+481: .data 37
+482: .data 49
+483: .data 29
+484: .data 95
+485: .data 12
+486: .data 98
+487: .data 49
+488: .data 57
+489: .data 36
+490: .data 43
+491: .data 96
+492: .data 99
+493: .data 17
+494: .data 18
+495: .data 95
+496: .data 26
+497: .data 80
+498: .data 20
+499: .data 29
+500: .data 50
+501: .data 73
+502: .data 69
+503: .data 51
+504: .data 50
+505: .data 9
+506: .data 46
+507: .data 78
+508: .data 38
+509: .data 72
+510: .data 88
+511: .data 39
+512: .data 3
+513: .data 92
+514: .data 96
+515: .data 50
+516: .data 88
+517: .data 14
+518: .data 98
+519: .data 93
+520: .data 7
+521: .data 62
+522: .data 15
+523: .data 97
+524: .data 15
+525: .data 33
+526: .data 21
+527: .data 96
+528: .data 15
+529: .data 74
+530: .data 76
+531: .data 38
+532: .data 12
+533: .data 63
+534: .data 77
+535: .data 80
+536: .data 29
+537: .data 91
+538: .data 96
+539: .data 23
+540: .data 18
+541: .data 75
+542: .data 52
+543: .data 96
+544: .data 78
+545: .data 94
+546: .data 88
+547: .data 49
+548: .data 65
+549: .data 43
+550: .data 82
+551: .data 58
+552: .data 46
+553: .data 27
+554: .data 62
+555: .data 2
+556: .data 32
+557: .data 81
+558: .data 45
+559: .data 67
+560: .data 83
+561: .data 80
+562: .data 62
+563: .data 54
+564: .data 40
+565: .data 85
+566: .data 66
+567: .data 48
+568: .data 54
+569: .data 72
+570: .data 87
+571: .data 3
+572: .data 7
+573: .data 86
+574: .data 84
+575: .data 2
+576: .data 45
+577: .data 46
+578: .data 82
+579: .data 84
+580: .data 17
+581: .data 36
+582: .data 29
+583: .data 94
+584: .data 12
+585: .data 47
+586: .data 59
+587: .data 89
+588: .data 28
+589: .data 93
+590: .data 40
+591: .data 50
+592: .data 77
+593: .data 83
+594: .data 48
+595: .data 66
+596: .data 18
+597: .data 15
+598: .data 70
+599: .data 13
+600: .data 68
+601: .data 26
+602: .data 86
+603: .data 46
+604: .data 18
+605: .data 63
+606: .data 6
+607: .data 97
+608: .data 21
+609: .data 76
+610: .data 75
+611: .data 80
+612: .data 1
+613: .data 30
+614: .data 67
+615: .data 38
+616: .data 74
+617: .data 8
+618: .data 9
+619: .data 65
+620: .data 90
+621: .data 68
+622: .data 11
+623: .data 66
+624: .data 60
+625: .data 12
+626: .data 4
+627: .data 96
+628: .data 94
+629: .data 60
+630: .data 36
+631: .data 25
+632: .data 78
+633: .data 13
+634: .data 67
+635: .data 70
+636: .data 35
+637: .data 76
+638: .data 53
+639: .data 11
+640: .data 72
+641: .data 40
+642: .data 70
+643: .data 59
+644: .data 9
+645: .data 11
+646: .data 88
+647: .data 27
+648: .data 44
+649: .data 61
+650: .data 11
+651: .data 54
+652: .data 98
+653: .data 69
+654: .data 35
+655: .data 93
+656: .data 93
+657: .data 9
+658: .data 85
+659: .data 2
+660: .data 78
+661: .data 21
+662: .data 99
+663: .data 96
+664: .data 27
+665: .data 81
+666: .data 40
+667: .data 9
+668: .data 99
+669: .data 42
+670: .data 66
+671: .data 77
+672: .data 10
+673: .data 95
+674: .data 7
+675: .data 31
+676: .data 90
+677: .data 44
+678: .data 89
+679: .data 90
+680: .data 24
+681: .data 24
+682: .data 48
+683: .data 75
+684: .data 69
+685: .data 36
+686: .data 5
+687: .data 94
+688: .data 89
+689: .data 17
+690: .data 81
+691: .data 52
+692: .data 92
+693: .data 15
+694: .data 52
+695: .data 76
+696: .data 65
+697: .data 35
+698: .data 22
+699: .data 17
+700: .data 58
+701: .data 40
+702: .data 18
+703: .data 2
+704: .data 77
+705: .data 72
+706: .data 49
+707: .data 73
+708: .data 36
+709: .data 35
+710: .data 62
+711: .data 24
+712: .data 64
+713: .data 12
+714: .data 70
+715: .data 1
+716: .data 11
+717: .data 24
+718: .data 82
+719: .data 20
+720: .data 53
+721: .data 80
+722: .data 97
+723: .data 49
+724: .data 70
+725: .data 6
+726: .data 95
+727: .data 12
+728: .data 62
+729: .data 58
+730: .data 12
+731: .data 49
+732: .data 77
+733: .data 80
+734: .data 24
+735: .data 49
+736: .data 86
+737: .data 97
+738: .data 95
+739: .data 45
+740: .data 71
+741: .data 90
+742: .data 60
+743: .data 38
+744: .data 94
+745: .data 23
+746: .data 37
+747: .data 85
+748: .data 1
+749: .data 77
+750: .data 26
+751: .data 57
+752: .data 81
+753: .data 30
+754: .data 58
+755: .data 67
+756: .data 39
+757: .data 60
+758: .data 10
+759: .data 3
+760: .data 82
+761: .data 21
+762: .data 41
+763: .data 71
+764: .data 38
+765: .data 49
+766: .data 65
+767: .data 19
+768: .data 4
+769: .data 93
+770: .data 57
+771: .data 2
+772: .data 74
+773: .data 12
+774: .data 96
+775: .data 12
+776: .data 22
+777: .data 7
+778: .data 50
+779: .data 87
+780: .data 76
+781: .data 51
+782: .data 33
+783: .data 1
+784: .data 90
+785: .data 66
+786: .data 12
+787: .data 85
+788: .data 79
+789: .data 28
+790: .data 18
+791: .data 66
+792: .data 35
+793: .data 21
+794: .data 89
+795: .data 51
+796: .data 83
+797: .data 14
+798: .data 32
+799: .data 63
+800: .data 12
+801: .data 71
+802: .data 40
+803: .data 63
+804: .data 4
+805: .data 95
+806: .data 7
+807: .data 72
+808: .data 65
+809: .data 20
+810: .data 45
+811: .data 79
+812: .data 16
+813: .data 75
+814: .data 85
+815: .data 58
+816: .data 16
+817: .data 74
+818: .data 17
+819: .data 53
+820: .data 88
+821: .data 64
+822: .data 75
+823: .data 29
+824: .data 21
+825: .data 24
+826: .data 51
+827: .data 85
+828: .data 51
+829: .data 97
+830: .data 44
+831: .data 49
+832: .data 67
+833: .data 59
+834: .data 90
+835: .data 29
+836: .data 7
+837: .data 8
+838: .data 98
+839: .data 22
+840: .data 52
+841: .data 94
+842: .data 65
+843: .data 31
+844: .data 83
+845: .data 64
+846: .data 29
+847: .data 43
+848: .data 95
+849: .data 11
+850: .data 68
+851: .data 88
+852: .data 18
+853: .data 35
+854: .data 80
+855: .data 78
+856: .data 39
+857: .data 96
+858: .data 22
+859: .data 94
+860: .data 10
+861: .data 31
+862: .data 93
+863: .data 9
+864: .data 71
+865: .data 43
+866: .data 64
+867: .data 80
+868: .data 67
+869: .data 17
+870: .data 63
+871: .data 50
+872: .data 49
+873: .data 75
+874: .data 14
+875: .data 76
+876: .data 31
+877: .data 89
+878: .data 21
+879: .data 73
+880: .data 30
+881: .data 3
+882: .data 69
+883: .data 97
+884: .data 60
+885: .data 27
+886: .data 24
+887: .data 22
+888: .data 66
+889: .data 27
+890: .data 68
+891: .data 89
+892: .data 69
+893: .data 12
+894: .data 49
+895: .data 91
+896: .data 48
+897: .data 54
+898: .data 60
+899: .data 5
+900: .data 84
+901: .data 69
+902: .data 18
+903: .data 67
+904: .data 1
+905: .data 63
+906: .data 51
+907: .data 28
+908: .data 23
+909: .data 97
+910: .data 4
+911: .data 62
+912: .data 21
+913: .data 13
+914: .data 45
+915: .data 99
+916: .data 33
+917: .data 69
+918: .data 99
+919: .data 5
+920: .data 95
+921: .data 32
+922: .data 54
+923: .data 45
+924: .data 72
+925: .data 99
+926: .data 65
+927: .data 8
+928: .data 54
+929: .data 1
+930: .data 91
+931: .data 27
+932: .data 50
+933: .data 91
+934: .data 65
+935: .data 13
+936: .data 91
+937: .data 16
+938: .data 90
+939: .data 48
+940: .data 12
+941: .data 58
+942: .data 66
+943: .data 86
+944: .data 15
+945: .data 78
+946: .data 68
+947: .data 50
+948: .data 94
+949: .data 7
+950: .data 71
+951: .data 84
+952: .data 87
+953: .data 38
+954: .data 39
+955: .data 16
+956: .data 27
+957: .data 70
+958: .data 61
+959: .data 5
+960: .data 95
+961: .data 92
+962: .data 85
+963: .data 54
+964: .data 72
+965: .data 8
+966: .data 95
+967: .data 81
+968: .data 78
+969: .data 5
+970: .data 92
+971: .data 77
+972: .data 50
+973: .data 74
+974: .data 86
+975: .data 1
+976: .data 31
+977: .data 69
+978: .data 94
+979: .data 1
+980: .data 37
+981: .data 57
+982: .data 32
+983: .data 3
+984: .data 7
+985: .data 92
+986: .data 82
+987: .data 68
+988: .data 90
+989: .data 42
+990: .data 22
+991: .data 71
+992: .data 25
+993: .data 71
+994: .data 71
+995: .data 91
+996: .data 37
+997: .data 93
+998: .data 52
+999: .data 57
+1000: .data 18
+1001: .data 57
+1002: .data 23
+1003: .data 83
+1004: .data 39
+1005: .data 72
+1006: .data 25
+1007: .data 58
+1008: .data 6
+1009: .data 69
+1010: .data 46
+1011: .data 83
+1012: .data 19
+1013: .data 82
+1014: .data 48
+1015: .data 70
+1016: .data 28
+1017: .data 89
+1018: .data 98
+1019: .data 62
+1020: .data 48
+1021: .data 69
+1022: .data 81
+1023: .data 78
+1024: .data 24
+1025: .data 82
+1026: .data 47
+1027: .data 82
+1028: .data 40
+1029: .data 97
+1030: .data 10
+1031: .data 93
+
+; sec: table: variables
+1032: .data 0  ; var: CmpResult
+1033: .data 0  ; var: MoveCmd (1-4)
+1034: 21 (invalid data!)  ; var: CurrCol
+1035: 21 (invalid data!)  ; var: CurrRow
+1036: .data 1
+1037: .data 10
+1038: .data 1
+1039: .data 0  ; var: MoveCol
+1040: .data 0  ; var: MoveRow
+1041: .data 0
+1042: .data 0
+1043: .data 0
+1044: .data 0  ; var: StatusReply
