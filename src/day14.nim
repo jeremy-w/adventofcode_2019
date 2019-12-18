@@ -58,41 +58,44 @@ func findOreForUnitFuel(rs: Reactions): int =
   for r in rs:
     outputToInputs[r.output.chem] = (qty: r.output.qty, inputs: r.inputs)
 
-  func isPrecursor(ch: Chemical): auto =
-    outputToInputs[ch].inputs.allIt(it.chem == RawInput)
-  var precursorAmounts = initTable[Chemical, float64]()
+  var surplus = initTable[Chemical, int]()
 
-  var queue = initDeque[tuple[qty: float64, chem: Chemical]]()
-  queue.addLast (qty: 1.0, chem: Goal)
+  var oreUsed = 0
+  var queue = initDeque[Amt]()
+  queue.addLast (qty: 1, chem: Goal)
   while queue.len > 0:
     var next = queue.popFirst
     debugEcho "making ", next
 
-    if next.chem.isPrecursor:
-      var needed = precursorAmounts.getOrDefault(next.chem, 0)
-      needed += next.qty
-      precursorAmounts[next.chem] = needed
-      debugEcho "  it's a precursor"
+    if next.chem == RawInput:
+      oreUsed += next.qty
+      debugEcho &"  ore: have now used {oreUsed}"
       continue
 
-    let (qty, inputs) = outputToInputs[next.chem]
+    var amtToMake = next.qty
+    if surplus.hasKey(next.chem):
+      let used = min(surplus[next.chem], amtToMake)
+      surplus[next.chem] -= used
+      amtToMake -= used
+      debugEcho &"    consuming {used} of surplus of {next.chem}, still need to make {amtToMake}"
+
+    let (amountProducedByOneReaction, inputs) = outputToInputs[next.chem]
     # Messing around with this multiple is pushing me over/under.
     # I'm probably missing something about needing to actually track amounts available or something.
-    let multiple = ceil(next.qty / qty.toBiggestFloat)
-    debugEcho &"  need to run {multiple} times, as reacting {inputs} produces {qty}"
+    let multiple = ceil(amtToMake.toBiggestFloat /
+        amountProducedByOneReaction.toBiggestFloat).toInt
+    let surplusCreated = multiple*amountProducedByOneReaction - amtToMake
+    debugEcho &"  running {multiple} times creates surplus of {surplusCreated}"
+    let avail = surplus.getOrDefault(next.chem, 0)
+    surplus[next.chem] = avail + surplusCreated
+
     for amt in inputs:
-      let needed = (qty: multiple*amt.qty.toBiggestFloat, chem: amt.chem)
+      var qtyNeeded = multiple*amt.qty
+      let needed = (qty: qtyNeeded, chem: amt.chem)
       debugEcho "    needs ", needed
       queue.addLast needed
-  debugEcho "required precursors: ", precursorAmounts
-
-  var ore = 0.0
-  for precursor, amount in precursorAmounts:
-    let (qty, inputs) = outputToInputs[precursor]
-    let multiple = ceil(amount / qty.toBiggestFloat)
-    debugEcho &"need to run {precursor}'s reaction {multiple} times"
-    ore += multiple * inputs[0].qty.toBiggestFloat
-  return ore.int
+  debugEcho &"ore used: {oreUsed}"
+  return oreUsed
 
 echo "\pExample 1"
 const ex1 = """10 ORE => 10 A
