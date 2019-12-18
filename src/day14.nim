@@ -65,11 +65,11 @@ func findTheoreticalOreForUnitFuel(rs: Reactions): float64 =
   queue.addLast (qty: 1.toBiggestFloat, chem: Goal)
   while queue.len > 0:
     var next = queue.popFirst
-    debugEcho "making ", next
+    # debugEcho "making ", next
 
     if next.chem == RawInput:
       oreUsed += next.qty
-      debugEcho &"  ore: have now used {oreUsed}"
+      # debugEcho &"  ore: have now used {oreUsed}"
       continue
 
     var amtToMake = next.qty
@@ -77,7 +77,7 @@ func findTheoreticalOreForUnitFuel(rs: Reactions): float64 =
       let used = min(surplus[next.chem], amtToMake)
       surplus[next.chem] -= used
       amtToMake -= used
-      debugEcho &"    consuming {used} of surplus of {next.chem}, still need to make {amtToMake}"
+      # debugEcho &"    consuming {used} of surplus of {next.chem}, still need to make {amtToMake}"
 
     let (amountProducedByOneReaction, inputs) = outputToInputs[next.chem]
     # Messing around with this multiple is pushing me over/under.
@@ -86,7 +86,7 @@ func findTheoreticalOreForUnitFuel(rs: Reactions): float64 =
         amountProducedByOneReaction.toBiggestFloat)
     let surplusCreated = multiple*amountProducedByOneReaction.toBiggestFloat -
         amtToMake
-    debugEcho &"  running {multiple} times creates surplus of {surplusCreated}"
+    # debugEcho &"  running {multiple} times creates surplus of {surplusCreated}"
     let avail = surplus.getOrDefault(next.chem, 0)
     surplus[next.chem] = avail + surplusCreated
 
@@ -95,26 +95,26 @@ func findTheoreticalOreForUnitFuel(rs: Reactions): float64 =
       let needed = (qty: qtyNeeded, chem: amt.chem)
       debugEcho "    needs ", needed
       queue.addLast needed
-  debugEcho &"ore used: {oreUsed}"
+  # debugEcho &"ore used: {oreUsed}"
   return oreUsed
 
-func findOreForUnitFuel(rs: Reactions): int =
+func findOreForUnitFuel(rs: Reactions, fuelUnits: int64 = 1): int64 =
   var outputToInputs = initTable[Chemical, tuple[qty: int, inputs: seq[Amt]]]()
   for r in rs:
     outputToInputs[r.output.chem] = (qty: r.output.qty, inputs: r.inputs)
 
-  var surplus = initTable[Chemical, int]()
+  var surplus = initTable[Chemical, int64]()
 
-  var oreUsed = 0
-  var queue = initDeque[Amt]()
-  queue.addLast (qty: 1, chem: Goal)
+  var oreUsed = 0'i64
+  var queue = initDeque[tuple[qty: int64, chem: Chemical]]()
+  queue.addLast (qty: fuelUnits, chem: Goal)
   while queue.len > 0:
     var next = queue.popFirst
-    debugEcho "making ", next
+    # debugEcho "making ", next
 
     if next.chem == RawInput:
       oreUsed += next.qty
-      debugEcho &"  ore: have now used {oreUsed}"
+      # debugEcho &"  ore: have now used {oreUsed}"
       continue
 
     var amtToMake = next.qty
@@ -122,24 +122,24 @@ func findOreForUnitFuel(rs: Reactions): int =
       let used = min(surplus[next.chem], amtToMake)
       surplus[next.chem] -= used
       amtToMake -= used
-      debugEcho &"    consuming {used} of surplus of {next.chem}, still need to make {amtToMake}"
+      # debugEcho &"    consuming {used} of surplus of {next.chem}, still need to make {amtToMake}"
 
     let (amountProducedByOneReaction, inputs) = outputToInputs[next.chem]
     # Messing around with this multiple is pushing me over/under.
     # I'm probably missing something about needing to actually track amounts available or something.
     let multiple = ceil(amtToMake.toBiggestFloat /
-        amountProducedByOneReaction.toBiggestFloat).toInt
+        amountProducedByOneReaction.toBiggestFloat).toBiggestInt
     let surplusCreated = multiple*amountProducedByOneReaction - amtToMake
-    debugEcho &"  running {multiple} times creates surplus of {surplusCreated}"
+    # debugEcho &"  running {multiple} times creates surplus of {surplusCreated}"
     let avail = surplus.getOrDefault(next.chem, 0)
     surplus[next.chem] = avail + surplusCreated
 
     for amt in inputs:
       var qtyNeeded = multiple*amt.qty
       let needed = (qty: qtyNeeded, chem: amt.chem)
-      debugEcho "    needs ", needed
+      # debugEcho "    needs ", needed
       queue.addLast needed
-  debugEcho &"ore used: {oreUsed}"
+  # debugEcho &"ore used: {oreUsed}"
   return oreUsed
 
 echo "\pExample 1"
@@ -247,6 +247,12 @@ const day14 = readFile("input/day14.txt").toReactions
 let part1 = day14.findOreForUnitFuel
 echo &"ORE per FUEL is: {part1}"
 
-let theory = day14.findTheoreticalOreForUnitFuel
-let oneTrillion = 1000000000000.0
-echo &"Theoretical ORE per FUEL is: {theory}, so 1 trillion ore buys you {oneTrillion / theory} fuel"
+const oneTrillion = 1000000000000
+  # let theory = day14.findTheoreticalOreForUnitFuel
+# echo &"Theoretical ORE per FUEL is: {theory}, so 1 trillion ore buys you {oneTrillion / theory} fuel"
+
+var fuelGenerated = 7993832'i64
+while day14.findOreForUnitFuel(fuelUnits = fuelGenerated) > oneTrillion:
+  dec fuelGenerated
+  echo fuelGenerated
+echo &"we can make {fuelGenerated} fuel with {oneTrillion} ore"
