@@ -34,3 +34,8 @@ Let's go with [Nim](https://nim-lang.org/) this year.
 
 ## Handy Tools
 - Use `toPrettyProgram` to disassemble an intcode program. You can pass it an array of ranges known to be data so it doesn't desync on opcode parsing.
+
+## Gotcha
+I taught Nimble that all my `day*.nim` files are `day*` binaries, but it caches
+the targets, so you have to touch the file after adding a new one to get it to
+"see" the new binary target.
