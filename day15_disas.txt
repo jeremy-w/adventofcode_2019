@@ -26,7 +26,7 @@
 43: eq? @1038 #0 @1043
 47: mul #-1 @1043 @1032(CmpResult)
 51: add @1037 @1032(CmpResult) @1042
-55: bnz #1 #124
+55: jmp #124
 
 ; sec: move south
 58: add @1034(CurrCol) #0 @1039(MoveCol)
@@ -34,7 +34,7 @@
 66: add @1035(CurrRow) #1 @1040(MoveRow)  ; move down a line
 70: eq? @1038 #0 @1043
 74: add @1037 @1038 @1042
-78: bnz #1 #124
+78: jmp #124
 
 ; sec: move west
 81: add @1034(CurrCol) #-1 @1039(MoveCol)
@@ -42,7 +42,7 @@
 89: mul @1035(CurrRow) #1 @1040(MoveRow)
 93: add @1038 #0 @1043
 97: mul @1037 #1 @1042
-101: bnz #1 #124
+101: jmp #124
 
 ; sec: move east
 104: add @1034(CurrCol) #1 @1039(MoveCol)
@@ -68,14 +68,14 @@
 151: eq? @1040(MoveRow) #5 @1032(CmpResult)
 155: brz @1032(CmpResult) #165
 158: add #2 #0 @1044(StatusReply)  ; StatusReply = FoundIt at (3, 5)
-162: bnz #1 #224
+162: jmp #224
 
 ; sec: not oxygen
 165: mul @1041 @1043 @1032(CmpResult)
 169: brz @1032(CmpResult) #179
 
 172: mul #1 #1 @1044(StatusReply)  ; report DidMove
-176: bnz #1 #224
+176: jmp #224
 
 179: add @1041 @1043 @1032(CmpResult)
 183: brz @1032(CmpResult) #217  ; hit wall
@@ -87,13 +87,14 @@
 198: add @1032(CmpResult) @1039(MoveCol) @1032(CmpResult)
 202: add #-1 @1032(CmpResult) @1032(CmpResult)
 206: add #252 @1032(CmpResult) @211
-210: lt? @COMPUTED #55 @1044(StatusReply)  ; wall if <55, didMove otherwise
-214: brz #0 #224
+; if MazeTable[39*(@1042 + @1043 - 1) +  (MoveCol -1)} < 55: report OK, else: report wall
+210: lt? @COMPUTED #55 @1044(StatusReply)  ; values 55 and greater are walls
+214: jmp #224
 
 ; sec: report hitting wall. hit the edge of the grid (can't enter 0 or 40) or a wall tile.
 ; var: 1044 is the output. here it also functions as a "would we already hit a wall" flag.
 217: mul #0 #1 @1044(StatusReply)  ; load "hit wall"
-221: bnz #1 #224
+221: jmp #224
 
 ; sec: did not hit edge of grid
 224: brz @1044(StatusReply) #247  ; if wall, just output; otherwise, apply move
@@ -106,9 +107,10 @@
 243: add #0 @1042 @1037
 
 247: out @1044(StatusReply)
-249: brz #0 #0
+249: jmp #0
 
-; sec: maze table - <55 is a wall. 780 values.
+; sec: maze table - >=55 is a wall. 780 values total.
+; so 20 rows of 39 values, even though grid is 39x39?
 ; lookup is driven by some sort of stateful number generator
 252: .data 5
 253: .data 20
