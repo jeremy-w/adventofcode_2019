@@ -53,6 +53,51 @@ func toReactions(text: string): seq[Reaction] =
   .filterIt(it.contains "=>")
   .mapIt(it.toReaction)
 
+func findTheoreticalOreForUnitFuel(rs: Reactions): float64 =
+  var outputToInputs = initTable[Chemical, tuple[qty: int, inputs: seq[Amt]]]()
+  for r in rs:
+    outputToInputs[r.output.chem] = (qty: r.output.qty, inputs: r.inputs)
+
+  var surplus = initTable[Chemical, float64]()
+
+  var oreUsed = 0.toBiggestFloat
+  var queue = initDeque[tuple[qty: float64, chem: Chemical]]()
+  queue.addLast (qty: 1.toBiggestFloat, chem: Goal)
+  while queue.len > 0:
+    var next = queue.popFirst
+    debugEcho "making ", next
+
+    if next.chem == RawInput:
+      oreUsed += next.qty
+      debugEcho &"  ore: have now used {oreUsed}"
+      continue
+
+    var amtToMake = next.qty
+    if surplus.hasKey(next.chem):
+      let used = min(surplus[next.chem], amtToMake)
+      surplus[next.chem] -= used
+      amtToMake -= used
+      debugEcho &"    consuming {used} of surplus of {next.chem}, still need to make {amtToMake}"
+
+    let (amountProducedByOneReaction, inputs) = outputToInputs[next.chem]
+    # Messing around with this multiple is pushing me over/under.
+    # I'm probably missing something about needing to actually track amounts available or something.
+    let multiple = (amtToMake /
+        amountProducedByOneReaction.toBiggestFloat)
+    let surplusCreated = multiple*amountProducedByOneReaction.toBiggestFloat -
+        amtToMake
+    debugEcho &"  running {multiple} times creates surplus of {surplusCreated}"
+    let avail = surplus.getOrDefault(next.chem, 0)
+    surplus[next.chem] = avail + surplusCreated
+
+    for amt in inputs:
+      var qtyNeeded = multiple*amt.qty.toBiggestFloat
+      let needed = (qty: qtyNeeded, chem: amt.chem)
+      debugEcho "    needs ", needed
+      queue.addLast needed
+  debugEcho &"ore used: {oreUsed}"
+  return oreUsed
+
 func findOreForUnitFuel(rs: Reactions): int =
   var outputToInputs = initTable[Chemical, tuple[qty: int, inputs: seq[Amt]]]()
   for r in rs:
@@ -201,3 +246,7 @@ Given the list of reactions in your puzzle input, what is the minimum amount of 
 const day14 = readFile("input/day14.txt").toReactions
 let part1 = day14.findOreForUnitFuel
 echo &"ORE per FUEL is: {part1}"
+
+let theory = day14.findTheoreticalOreForUnitFuel
+let oneTrillion = 1000000000000.0
+echo &"Theoretical ORE per FUEL is: {theory}, so 1 trillion ore buys you {oneTrillion / theory} fuel"
