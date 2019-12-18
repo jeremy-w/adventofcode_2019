@@ -128,6 +128,8 @@ proc toPrettyProgram*(prog: Memory, dataRanges: openArray[Slice[int]] = []): str
         of pmImmediate: line &= &"#{arg}"
         of pmPosition: line &= &"@{arg}"
         of pmRelative: line &= &"R{arg}"
+      line = line.replace("bnz #1", "jmp")
+      line = line.replace("brz #0", "jmp")
       lines.add &"{ip}: {line}"
       inc ip, 1 + insn.op.paramCount
     except RangeError, IndexError:
