@@ -53,11 +53,13 @@ const
 
 proc nextMove(): MoveCmd =
   while true:
-    case getch()
-    of 'n': return mcN
-    of 'e': return mcE
-    of 's': return mcS
-    of 'w': return mcW
+    let c = getch()
+    # By handling ABCD, we get arrow keys without worrying about the \e[ part.
+    case c
+    of 'n', 'A': return mcN
+    of 'e', 'C': return mcE
+    of 's', 'B': return mcS
+    of 'w', 'D': return mcW
     of 'q': quit QuitSuccess
     else: continue
 
