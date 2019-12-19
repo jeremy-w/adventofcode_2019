@@ -62,7 +62,7 @@ proc nextMove(): MoveCmd =
     else: continue
 
 type Screen = ref object of RootObj
-  disp: array[40, array[40, char]]
+  disp: array[41, array[41, char]]
   pos: tuple[c: int, r: int]
   move: MoveCmd
   moveCnt: int
