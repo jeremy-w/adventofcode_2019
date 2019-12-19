@@ -53,10 +53,32 @@ for i in 1..100:
 assert bigEx.join("")[0..<8] == "24176176"
 echo &"ok - bigEx 100 phases"
 
-const puzzleDigits = readFile("input/day16.txt").strip().mapIt ($it).parseInt
+const puzzleString = readFile("input/day16.txt").strip()
+const puzzleDigits = puzzleString.mapIt ($it).parseInt
 var puzzle = puzzleDigits
 for i in 1..100:
   puzzle = puzzle.runPhase
 
 let firstEightDigits = puzzle.join("")[0..<8]
 echo &"first 8 digits after 100 phases: {firstEightDigits}"
+
+echo "\p--- Part 2"
+# The real signal is your puzzle input repeated 10000 times.
+var realSignal = repeat(puzzleString, 10_000).mapIt ($it).parseInt
+echo &"signal length: {realSignal.len}"
+
+# The first seven digits of your initial input signal also represent the message offset.
+const messageOffsetString = puzzleString[0..<7]
+assert messageOffsetString.len == 7
+const messageOffset = messageOffsetString.parseInt
+echo &"message offset: {messageOffset}"
+
+# Patterns are still calculated as before, and 100 phases of FFT are still applied.
+echo "Running 100 phases on that massive input."
+for i in 1..100:
+  echo i
+  realSignal = realSignal.runPhase
+
+# the message offset indicates the number of digits to skip before reading the eight-digit message
+let message = realSignal[messageOffset ..< (messageOffset + 8)]
+echo &"message: {message}"
