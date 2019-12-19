@@ -229,5 +229,39 @@ const maximalMap = """
 38 #.#.###############.###.###.#.#.#####.#.#
 39 #.#.......................#...#.........#
 40 #########################################"""
-let lines = maximalMap.splitLines()[2..^1].mapIt it[3..^1]
-echo lines
+var lines = maximalMap.splitLines()[2..^1].mapIt it[3..^1]
+# each line is 41 chars long
+var minutes = 0
+
+proc showLines() =
+  # eraseScreen()
+  echo &"After {minutes} minutes:"
+  echo lines.join("\p")
+
+assert lines[5][3] == Oxygen
+while lines.anyIt it.contains('.'):
+  # showLines()
+  # if getch() == 'q':
+  #   break
+  var spread: seq[(int, int)]
+  for i, line in lines:
+    for j, c in line:
+      if c != Floor and c != Start:
+        continue
+      let north = lines[max(lines.low, i - 1)][j]
+      let south = lines[min(lines.high, i+1)][j]
+      let east = line[min(line.high, j + 1)]
+      let west = line[max(line.low, j - 1)]
+      # echo &"checking {i},{j}. seeing: {west} {c} {east}, above {north}, below {south}"
+      if east == Oxygen or west == Oxygen:
+        spread.add (i, j)
+        continue
+      if north == Oxygen or south == Oxygen:
+        spread.add (i, j)
+  echo &"spread: {spread}"
+  for (i, j) in spread:
+    lines[i][j] = Oxygen
+  # Check that we spread to the first location.
+  assert lines[6][3] == Oxygen
+  inc minutes
+showLines()
