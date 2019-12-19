@@ -124,7 +124,12 @@ var machine = makeMachine(prog, onInput = proc (
     m: Machine): Int = screen.askMove(), onOutput = proc (i: Int,
     m: Machine) = screen.processReply(i))
 
-#machine.run()
+# Changing the starting location generates a different map!
+# machine.store(1034, 3)
+# machine.store(1035, 5)
+# screen.pos = (c: 3, r: 5)
+
+machine.run()
 
 # Explored by hand
 const map = """

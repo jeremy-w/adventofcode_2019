@@ -42,7 +42,7 @@ type
     id*: string
     ip*: Int
     relativeBase: Int
-    mem: Memory
+    mem*: Memory
     onInput*: (Machine) -> Int
     onOutput*: (Int, Machine) -> void
 
@@ -87,14 +87,14 @@ func toInstruction*(i: Int): Instruction =
 
     result.params.add(pm)
 
-proc store(m: Machine, index: Int, value: Int) =
+proc store*(m: Machine, index: Int, value: Int) =
   if index >= m.mem.len:
     m.mem.setLen index + 1
   if LogLoadStores:
     echo &">> store[{index}] := {value}"
   m.mem[index] = value
 
-proc load(m: Machine, index: Int): Int =
+proc load*(m: Machine, index: Int): Int =
   if index >= m.mem.len:
     return 0
   if LogLoadStores:
