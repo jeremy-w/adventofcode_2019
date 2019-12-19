@@ -74,7 +74,10 @@ proc makeScreen(): Screen =
       result.disp[i][j] = if i == 21 and j == 21: Start else: Unknown
 
 func displayString(s: Screen): string =
-  var lines = newSeqOfCap[string](s.disp.len)
+  var lines = newSeqOfCap[string](s.disp.len + 2)
+  lines.add "   " & repeat(' ', 10) & repeat('1', 10) & repeat('2', 10) &
+      repeat('3', 10) & '4'
+  lines.add "   " & repeat("0123456789", 4) & "0"
   for i, r in s.disp:
     var line = &"{i:2} "
     for j, c in r:
