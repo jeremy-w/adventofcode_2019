@@ -26,8 +26,12 @@ proc runPhase(input: openArray[int]): seq[int] =
       if patternIndex > pattern.high:
         patternIndex = pattern.low
       let patternDigit = pattern[patternIndex]
-      let contribution = patternDigit * inputDigit
-      inc output, contribution
+      if patternDigit == 0:
+        discard
+      elif patternDigit == 1:
+        inc output, inputDigit
+      else:
+        dec output, inputDigit
       # stdout.write &"{inputDigit}*{patternDigit} "
       inc patternIndex
     let onesDigit = abs(output mod 10)
@@ -61,6 +65,7 @@ for i in 1..100:
 
 let firstEightDigits = puzzle.join("")[0..<8]
 echo &"first 8 digits after 100 phases: {firstEightDigits}"
+assert firstEightDigits == "49254779"
 
 echo "\p--- Part 2"
 # The real signal is your puzzle input repeated 10000 times.
