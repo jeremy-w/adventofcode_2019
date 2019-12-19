@@ -20,36 +20,50 @@
 30: hlt
 
 ; sec: move north
+; A: column stays the same
+;@1041(A) = @1036(PrevA)
+;@1043(C) = @1038(PrevC) == 0 (previously hit wall)
+;@1042(B) = @1037(PrevB) + -1*@1043(C)
 31: mov @1034(CurrCol) @1039(MoveCol)
-35: mov @1036 @1041
+35: mov @1036(PrevA) @1041(A)
 39: add @1035(CurrRow) #-1 @1040(MoveRow)  ; move up a line
-43: eq? @1038 #0 @1043
-47: mul #-1 @1043 @1032(CmpResult)
-51: add @1037 @1032(CmpResult) @1042
+43: eq? @1038(PrevC) #0 @1043(C)
+47: mul #-1 @1043(C) @1032(CmpResult)
+51: add @1037(PrevB) @1032(CmpResult) @1042(B)
 55: jmp #124
 
 ; sec: move south
+; A: column stays the same
+;@1041(A) = @1036(PrevA)
+;@1043(C) = @1038(PrevC) == 0 (previously hit wall)
+;@1042(B) = @1037(PrevB) + @1038(PrevC)
 58: mov @1034(CurrCol) @1039(MoveCol)
-62: mov @1036 @1041
+62: mov @1036(PrevA) @1041(A)
 66: add @1035(CurrRow) #1 @1040(MoveRow)  ; move down a line
-70: eq? @1038 #0 @1043
-74: add @1037 @1038 @1042
+70: eq? @1038(PrevC) #0 @1043(C)
+74: add @1037(PrevB) @1038(PrevC) @1042(B)
 78: jmp #124
 
 ; sec: move west
+;A = PrevA == 0 (previously hit wall)
+;C = PrevC
+;B = PrevB
 81: add @1034(CurrCol) #-1 @1039(MoveCol)
-85: eq? @1036 #0 @1041
+85: eq? @1036(PrevA) #0 @1041(A)
 89: mov @1035(CurrRow) @1040(MoveRow)
-93: mov @1038 @1043
-97: mov @1037 @1042
+93: mov @1038(PrevC) @1043(C)
+97: mov @1037(PrevB) @1042(B)
 101: jmp #124
 
 ; sec: move east
+;A = PrevA == 0 (previously hit wall)
+;C = PrevC
+;B = PrevB
 104: add @1034(CurrCol) #1 @1039(MoveCol)
-108: eq? @1036 #0 @1041
+108: eq? @1036(PrevA) #0 @1041(A)
 112: mov @1035(CurrRow) @1040(MoveRow)
-116: mov @1038 @1043
-120: mov @1037 @1042
+116: mov @1038(PrevC) @1043(C)
+120: mov @1037(PrevB) @1042(B)
 
 ; sec: post-move
 ; handle hitting the edges of the 40x40 grid
@@ -71,23 +85,25 @@
 162: jmp #224
 
 ; sec: not oxygen
-165: mul @1041 @1043 @1032(CmpResult)
-169: brz @1032(CmpResult) #179
+165: mul @1041(A) @1043(C) @1032(CmpResult)
+169: brz @1032(CmpResult) #179 HitWall if A or C == 0
 
 172: mov #1 @1044(StatusReply)  ; report DidMove
 176: jmp #224
 
-179: add @1041 @1043 @1032(CmpResult)
+; sec: if A or C is zero, then say we hit a wall
+; the flip-flopping of A and C are why we hit walls so regularly.
+179: add @1041(A) @1043(C) @1032(CmpResult)
 183: brz @1032(CmpResult) #217  ; hit wall
 
 ; sec: table lookup
-186: add @1042 @1043 @1032(CmpResult)
+186: add @1042(B) @1043(C) @1032(CmpResult)
 190: add @1032(CmpResult) #-1 @1032(CmpResult)
 194: mul @1032(CmpResult) #39 @1032(CmpResult)
 198: add @1032(CmpResult) @1039(MoveCol) @1032(CmpResult)
 202: add #-1 @1032(CmpResult) @1032(CmpResult)
 206: add #252 @1032(CmpResult) @211
-; if MazeTable[39*(@1042 + @1043 - 1) +  (MoveCol -1)} < 55: report OK, else: report wall
+; if MazeTable[39*(@1042(B) + @1043(C) - 1) +  (MoveCol -1)} < 55: report OK, else: report wall
 210: lt? @COMPUTED #55 @1044(StatusReply)  ; values 55 and greater are walls
 214: jmp #224
 
@@ -102,9 +118,9 @@
 227: mov @1039(MoveCol) @1034(CurrCol)
 231: mov @1040(MoveRow) @1035(CurrRow)
 ; shift: 1036 := 1041; 1037 := 1042; 1038 := 1043
-235: mov @1041 @1036
-239: mov @1043 @1038
-243: mov @1042 @1037
+235: mov @1041(A) @1036(PrevA)
+239: mov @1043(C) @1038(PrevC)
+243: mov @1042(B) @1037(PrevB)
 
 247: out @1044(StatusReply)
 249: jmp #0
@@ -898,12 +914,98 @@
 1033: .data 0  ; var: MoveCmd (1-4)
 1034: 21 (invalid data!)  ; var: CurrCol
 1035: 21 (invalid data!)  ; var: CurrRow
-1036: .data 1
-1037: .data 10
-1038: .data 1
+1036: .data 1 ; var: PrevA
+1037: .data 10  ; var: PrevB
+1038: .data 1  ; var: PrevC
 1039: .data 0  ; var: MoveCol
 1040: .data 0  ; var: MoveRow
-1041: .data 0
-1042: .data 0
-1043: .data 0
+1041: .data 0  ; var: A
+1042: .data 0  ; var: B
+1043: .data 0  ; var: C
 1044: .data 0  ; var: StatusReply
+
+
+  0  ### ####### #########
+ 1 #...#.......#.........#
+ 2 #.#.###.#.###.###.###.##
+ 3 #.#...#.#.......#.#.....#
+ 4 #.###.#########.#.#####.#
+ 5 #.#X#.#.....#...#...#...
+ 6 #.#.#.#.###.#######.####
+ 7 #.#.....#.#...#...#...#
+ 8 #.#######.###.#. .###.#
+ 9 #.......#...#...#.#...#
+10 #.#####.#.#######.#.## ###
+11 #.#...#.#.........#...#...#
+12 #.###.#.###.#### ####.#.#.##
+13 #.....#...#.#...#.....#.#...#
+14  ####.###.#.#.#.###.# #. ##.##
+15 #.....#...#...#.....# #.#.#...#
+16 #.#####.## ####.#### ##.#.###.#
+17 #.#...#...#.....#...#...#.#...#
+18 #.###.###.###.###.#.#.###.#.##
+19 #.......#...#.#...#...#...#...#
+20 #.###### ##.#.#.#######.#####.#
+21 #.#.....#...#.#......O#.#.....#
+22  ##.#  .#. ##.#########.#.####
+23  ...#...#.#.#...#...#...#.....#
+24  .  #.## .#.#.###.#.#.#.#####.#
+25  .   .....#...#...#...#.....#.#
+26  . ##### ##.###.## ### ####.#.#
+27  .#.....#...#.#.#         #...#
+28  .#.   .#.###.#.#          ###
+29  . .   .#.#...#.#
+30  . .   .#.###.#.##
+31  . .   .#...#.#...#
+32  . . # . ##.#.###.##
+33 #. . ...#.......#...#
+34  . . . ####.#### ##.#
+35  ... .#...#.#...#...#
+36  # # . . .  #.#.#.##
+37     #...#.....#...
+38              #   #
+
+
+---
+ 0
+ 1  ...
+ 2  .#.
+ 3  .#...
+ 4  .###.#
+ 5  .#X .
+ 6  .#.#.
+ 7  .#...
+ 8  .######
+ 9  .......
+10       #.               ###
+11       #.              #...#
+12       #.##            #.#. #
+13        ...#           #. ...#
+14        ##.#           #. ##. #
+15       #...            #.   ...#
+16       #.#        ### ##.#  # .#
+17       #...      #...#...  #...#
+18        ##.##   ##.#. .    #.##
+19          ...# #...#...     ...
+20    ##### ##.# #.######     ##.#
+21   #.....#...   ......O   .....
+22   #.# #.#.       ### #  #.####
+23  ... ...#.      #...#...#.....
+24  .# #.## .     ##. .#.#. ####.#
+25 #.# ......    #...#...#.....#.
+26  . #####      #.#         #.#.
+27  .#.....#     #.          #...
+28  .#.   .#     #.
+29  .#.   .#     #.
+30  .#.   .#     #.
+31  .#.   .#     #...
+32  .#. ##.#      ##.
+33  .#. ...        #...
+34  .#. . ###   ### ##.#
+35  ... .#...# #...#...
+36  #   .#.#.###.#.#.
+37      ... .....#...
+38       #        ##
+39
+
+Moves: 615
