@@ -137,7 +137,7 @@ var machine = makeMachine(prog, onInput = proc (
 machine.run()
 
 # Explored by hand
-const map = """
+const minimalMap = """
 ---
  0
  1  ...
@@ -179,8 +179,9 @@ const map = """
 37      ... .....#...
 38       #        ##
 39                     """
-let stepCount = map.filterIt(it == Oxygen or it == Floor).len
+let stepCount = minimalMap.filterIt(it == Oxygen or it == Floor).len
 echo "stepCount: ", stepCount
 
 echo "Part 2"
 # Use the repair droid to get a complete map of the area. How many minutes will it take to fill with oxygen?
+const maximalMap = ""
