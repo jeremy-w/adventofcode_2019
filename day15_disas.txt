@@ -20,8 +20,8 @@
 30: hlt
 
 ; sec: move north
-31: mul @1034(CurrCol) #1 @1039(MoveCol)
-35: mul @1036 #1 @1041
+31: mov @1034(CurrCol) @1039(MoveCol)
+35: mov @1036 @1041
 39: add @1035(CurrRow) #-1 @1040(MoveRow)  ; move up a line
 43: eq? @1038 #0 @1043
 47: mul #-1 @1043 @1032(CmpResult)
@@ -29,8 +29,8 @@
 55: jmp #124
 
 ; sec: move south
-58: add @1034(CurrCol) #0 @1039(MoveCol)
-62: add @1036 #0 @1041
+58: mov @1034(CurrCol) @1039(MoveCol)
+62: mov @1036 @1041
 66: add @1035(CurrRow) #1 @1040(MoveRow)  ; move down a line
 70: eq? @1038 #0 @1043
 74: add @1037 @1038 @1042
@@ -39,17 +39,17 @@
 ; sec: move west
 81: add @1034(CurrCol) #-1 @1039(MoveCol)
 85: eq? @1036 #0 @1041
-89: mul @1035(CurrRow) #1 @1040(MoveRow)
-93: add @1038 #0 @1043
-97: mul @1037 #1 @1042
+89: mov @1035(CurrRow) @1040(MoveRow)
+93: mov @1038 @1043
+97: mov @1037 @1042
 101: jmp #124
 
 ; sec: move east
 104: add @1034(CurrCol) #1 @1039(MoveCol)
 108: eq? @1036 #0 @1041
-112: mul @1035(CurrRow) #1 @1040(MoveRow)
-116: add @1038 #0 @1043
-120: add #0 @1037 @1042
+112: mov @1035(CurrRow) @1040(MoveRow)
+116: mov @1038 @1043
+120: mov @1037 @1042
 
 ; sec: post-move
 ; handle hitting the edges of the 40x40 grid
@@ -67,14 +67,14 @@
 148: brz @1032(CmpResult) #165
 151: eq? @1040(MoveRow) #5 @1032(CmpResult)
 155: brz @1032(CmpResult) #165
-158: add #2 #0 @1044(StatusReply)  ; StatusReply = FoundIt at (3, 5)
+158: mov #2 @1044(StatusReply)  ; StatusReply = FoundIt at (3, 5)
 162: jmp #224
 
 ; sec: not oxygen
 165: mul @1041 @1043 @1032(CmpResult)
 169: brz @1032(CmpResult) #179
 
-172: mul #1 #1 @1044(StatusReply)  ; report DidMove
+172: mov #1 @1044(StatusReply)  ; report DidMove
 176: jmp #224
 
 179: add @1041 @1043 @1032(CmpResult)
@@ -93,18 +93,18 @@
 
 ; sec: report hitting wall. hit the edge of the grid (can't enter 0 or 40) or a wall tile.
 ; var: 1044 is the output. here it also functions as a "would we already hit a wall" flag.
-217: mul #0 #1 @1044(StatusReply)  ; load "hit wall"
+217: mov #0 @1044(StatusReply)  ; load "hit wall"
 221: jmp #224
 
 ; sec: did not hit edge of grid
 224: brz @1044(StatusReply) #247  ; if wall, just output; otherwise, apply move
 
-227: mul #1 @1039(MoveCol) @1034(CurrCol)
-231: mul #1 @1040(MoveRow) @1035(CurrRow)
+227: mov @1039(MoveCol) @1034(CurrCol)
+231: mov @1040(MoveRow) @1035(CurrRow)
 ; shift: 1036 := 1041; 1037 := 1042; 1038 := 1043
-235: mul #1 @1041 @1036
-239: mul @1043 #1 @1038
-243: add #0 @1042 @1037
+235: mov @1041 @1036
+239: mov @1043 @1038
+243: mov @1042 @1037
 
 247: out @1044(StatusReply)
 249: jmp #0

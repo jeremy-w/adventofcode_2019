@@ -1,7 +1,9 @@
+import nre except toSeq
 import sequtils
 import strformat
 import strutils
 import sugar
+import tables
 
 const
   LogEachInstruction = false
@@ -105,7 +107,12 @@ proc toProgram*(line: string): seq[Int] =
 proc toString*(mem: seq[int]): string =
   mem.mapIt($it).join(",")
 
-proc toPrettyProgram*(prog: Memory, dataRanges: openArray[Slice[int]] = []): string =
+proc toPrettyProgram*(
+  prog: Memory,
+  dataRanges: openArray[Slice[int]] = [],
+  varNames: openArray[(Int, string)] = []
+): string =
+  let nameOf = varNames.toTable
   var ip = 0
   var lines = newSeq[string]()
   while ip < prog.len:
@@ -114,7 +121,10 @@ proc toPrettyProgram*(prog: Memory, dataRanges: openArray[Slice[int]] = []): str
       if ip in r:
         isData = true
     if isData:
-      lines.add &"{ip}: .data {prog[ip]}"
+      var line = &"{ip}: .data {prog[ip]}"
+      if nameOf.hasKey(ip):
+        line.add &"  ; var: {nameOf[ip]}"
+      lines.add line
       inc ip
       continue
 
@@ -126,11 +136,22 @@ proc toPrettyProgram*(prog: Memory, dataRanges: openArray[Slice[int]] = []): str
         line &= " "
         case insn.params[i]
         of pmImmediate: line &= &"#{arg}"
-        of pmPosition: line &= &"@{arg}"
+        of pmPosition:
+          line &= &"@{arg}"
+          if nameOf.hasKey(arg):
+            line &= &"({nameOf[arg]})"
         of pmRelative: line &= &"R{arg}"
       line = line.replace("bnz #1", "jmp")
       line = line.replace("brz #0", "jmp")
+      line = line.replace("add #0", "mov")
+      line = line.replace(re"add (\S+) #0", "mov $1")
+      line = line.replace("mul #1", "mov")
+      line = line.replace(re"mul (\S+) #1", "mov $1")
+      if nameOf.hasKey(ip):
+        line.add &"  ; var: {nameOf[ip]}"
       lines.add &"{ip}: {line}"
+      if line.match(re"brz|bnz|jmp|hlt").isSome:
+        lines.add ""
       inc ip, 1 + insn.op.paramCount
     except RangeError, IndexError:
       lines.add &"{ip}: .data {prog[ip]}"
