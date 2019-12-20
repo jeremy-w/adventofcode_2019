@@ -1,3 +1,4 @@
+import math
 import sequtils
 import strutils
 import strformat
@@ -58,6 +59,9 @@ assert bigEx.join("")[0..<8] == "24176176"
 echo &"ok - bigEx 100 phases"
 
 const puzzleString = readFile("input/day16.txt").strip()
+echo &"len: {puzzleString.len}"
+assert puzzleString.len == 650
+assert puzzleString.len == 5^2 * 2 * 13
 const puzzleDigits = puzzleString.mapIt ($it).parseInt
 var puzzle = puzzleDigits
 for i in 1..100:
@@ -71,12 +75,15 @@ echo "\p--- Part 2"
 # The real signal is your puzzle input repeated 10000 times.
 var realSignal = repeat(puzzleString, 10_000).mapIt ($it).parseInt
 echo &"signal length: {realSignal.len}"
+assert realSignal.len == 6500000
+assert realSignal.len == 5^6 * 2^5 * 13
 
 # The first seven digits of your initial input signal also represent the message offset.
 const messageOffsetString = puzzleString[0..<7]
 assert messageOffsetString.len == 7
 const messageOffset = messageOffsetString.parseInt
 echo &"message offset: {messageOffset}"
+assert messageOffset == 5979351
 
 # Patterns are still calculated as before, and 100 phases of FFT are still applied.
 echo "Running 100 phases on that massive input."
