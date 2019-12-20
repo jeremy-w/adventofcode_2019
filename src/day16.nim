@@ -3,6 +3,8 @@ import sequtils
 import strutils
 import strformat
 # import nimprof
+import threadpool
+{.experimental: "parallel".}
 
 echo "=== AoC 2019, Day 16"
 echo "--- Part 1"
@@ -27,29 +29,30 @@ iterator applicablePattern(i: int): int =
         continue
       yield digit
 
+proc produceDigit(outputIndex: int, input: openArray[int]): int =
+  var i = 0
+  for patternDigit in applicablePattern(outputIndex):
+    if i > input.high:
+      break
+    let inputDigit = input[i]
+    inc i
+
+    if patternDigit == 0:
+      discard
+    elif patternDigit == 1:
+      inc result, inputDigit
+    else:
+      dec result, inputDigit
+    # stdout.write &"{inputDigit}*{patternDigit} "
+
+  result = abs(result mod 10)
+  # echo &" = {result}"
+
 proc runPhase(input: openArray[int]): seq[int] =
-  result = newSeqOfCap[int](input.len)
-  for outputIndex in 0 ..< input.len:
-    var output = 0
-
-    var i = 0
-    for patternDigit in applicablePattern(outputIndex):
-      if i > input.high:
-        break
-      let inputDigit = input[i]
-      inc i
-
-      if patternDigit == 0:
-        discard
-      elif patternDigit == 1:
-        inc output, inputDigit
-      else:
-        dec output, inputDigit
-      # stdout.write &"{inputDigit}*{patternDigit} "
-
-    let onesDigit = abs(output mod 10)
-    # echo &" = {onesDigit}"
-    result.add onesDigit
+  result = repeat(0, input.len)
+  parallel:
+    for outputIndex in 0 ..< result.len:
+      result[outputIndex] = spawn produceDigit(outputIndex, input)
 
 const ex1Digits = "12345678".mapIt ($it).parseInt
 var ex1 = ex1Digits
@@ -89,7 +92,7 @@ echo "\p--- Part 2"
 # The real signal is your puzzle input repeated 10000 times.
 var realSignal = repeat(puzzleString, 10_000).mapIt ($it).parseInt
 echo &"signal length: {realSignal.len}"
-assert realSignal.len == 6500000
+assert realSignal.len == 6_500_000
 assert realSignal.len == 5^6 * 2^5 * 13
 
 # The first seven digits of your initial input signal also represent the message offset.
