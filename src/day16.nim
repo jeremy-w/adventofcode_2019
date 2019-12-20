@@ -2,6 +2,7 @@ import math
 import sequtils
 import strutils
 import strformat
+# import nimprof
 
 echo "=== AoC 2019, Day 16"
 echo "--- Part 1"
@@ -50,7 +51,8 @@ proc runPhase(input: openArray[int]): seq[int] =
     # echo &" = {onesDigit}"
     result.add onesDigit
 
-var ex1 = "12345678".mapIt ($it).parseInt
+const ex1Digits = "12345678".mapIt ($it).parseInt
+var ex1 = ex1Digits
 for i, expected in @[
   "48226158",
   "34040438",
@@ -63,7 +65,8 @@ for i, expected in @[
     echo &"ok - ex1: ran {i + 1} phases"
 
 # After 100 phases of FFT, what are the first eight digits in the final output list?
-var bigEx = "80871224585914546619083218645595".mapIt ($it).parseInt
+const bigExDigits = "80871224585914546619083218645595".mapIt ($it).parseInt
+var bigEx = bigExDigits
 for i in 1..100:
   bigEx = bigEx.runPhase
 assert bigEx.join("")[0..<8] == "24176176"
