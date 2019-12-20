@@ -7,26 +7,37 @@ echo "=== AoC 2019, Day 16"
 echo "--- Part 1"
 
 const basePattern = [0, 1, 0, -1]
-proc patternForElementAtIndex(i: int): seq[int] =
+iterator patternForElementAtIndex(i: int): int =
   let repeatCount = i + 1
-  result = newSeqOfCap[int](repeatCount * basePattern.len)
   for digit in basePattern:
-    result.add sequtils.repeat(digit, repeatCount)
+    for _ in 1..repeatCount:
+      yield digit
 
-assert patternForElementAtIndex(0) == basePattern.toSeq
-assert patternForElementAtIndex(1) == @[0, 0, 1, 1, 0, 0, -1, -1]
+assert toSeq(patternForElementAtIndex(0)) == basePattern.toSeq
+assert toSeq(patternForElementAtIndex(1)) == @[0, 0, 1, 1, 0, 0, -1, -1]
+
+iterator applicablePattern(i: int): int =
+  var first = true
+  while true:
+    # When applying the pattern, skip the very first value exactly once.
+    for digit in patternForElementAtIndex(i):
+      if first:
+        first = false
+        continue
+      yield digit
 
 proc runPhase(input: openArray[int]): seq[int] =
   result = newSeqOfCap[int](input.len)
   for outputIndex in 0 ..< input.len:
-    let pattern = patternForElementAtIndex(outputIndex)
-    # When applying the pattern, skip the very first value exactly once.
     var output = 0
-    var patternIndex = 1
-    for inputDigit in input:
-      if patternIndex > pattern.high:
-        patternIndex = pattern.low
-      let patternDigit = pattern[patternIndex]
+
+    var i = 0
+    for patternDigit in applicablePattern(outputIndex):
+      if i > input.high:
+        break
+      let inputDigit = input[i]
+      inc i
+
       if patternDigit == 0:
         discard
       elif patternDigit == 1:
@@ -34,7 +45,7 @@ proc runPhase(input: openArray[int]): seq[int] =
       else:
         dec output, inputDigit
       # stdout.write &"{inputDigit}*{patternDigit} "
-      inc patternIndex
+
     let onesDigit = abs(output mod 10)
     # echo &" = {onesDigit}"
     result.add onesDigit
