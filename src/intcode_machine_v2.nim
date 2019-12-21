@@ -47,7 +47,7 @@ type
     onOutput*: (Int, Machine) -> void
 
 proc defaultOnInput(m: Machine): Int = 0
-proc defaultOnOutput(i: Int, m: Machine) = echo &"OUTPUT: {i} from {m.id}"
+proc defaultOnOutput(i: Int, m: Machine) = echo &"OUTPUT: {i} from {m.id}:{m.ip}"
 
 func makeMachine*(
   mem: Memory,
