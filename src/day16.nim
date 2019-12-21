@@ -6,6 +6,12 @@ import strformat
 import threadpool
 {.experimental: "parallel".}
 
+#[
+  To do for part 2: handle as recursive memoized findDigit(atIndex, forRunIndex: int; givenInitialInput: array[T, int]): int. save the memo table across calls so we can reuse as much computation as possible.
+
+  This exploits that the pattern is very sparse at high output digit indexes.
+]#
+
 echo "=== AoC 2019, Day 16"
 echo "--- Part 1"
 
