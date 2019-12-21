@@ -91,15 +91,19 @@ assert scanRow(12) == 7.Int .. 8.Int
 
 proc isCovered(ul: Point, br: Point): bool =
   result = true
+  echo "checking: ", ul
   for x in ul.x .. br.x:
     for y in ul.y .. br.y:
       if scan((x, y)) == 0:
         return false
 
-proc isCovered(ul: Point): bool =
-  isCovered(ul, (ul.x + 99, ul.y + 99))
+proc isCovered(bl: Point): bool =
+  isCovered((bl.x, bl.y - 99), (bl.x + 99, bl.y))
 
-var y = 705
+# 727, 1304 works
+# 681, 1220 works
+# (667, 1196) is the earliest Y that works. That corresponds to UL corner 667,1097.
+var y = 1196
 while true:
   echo &"row {y}"
   let covered = scanRow(y, true)
@@ -139,8 +143,9 @@ assert scanCol((x: 4.Int, y: 6.Int)) == 6.Int .. 7.Int
 #   echo &"{p} covers {covered.len}: {covered}"
 # (x: 393, y: 705) covers 143: 563 .. 705
 
-let hit = (x: 393.Int, y: 705.Int)
+let hit = (x: 667.Int, y: 1097.Int)
 echo &"hit: {hit}, answer: {hit.x * 10000 + hit.y}"
+
 # That's not the right answer; your answer 3930705 is too low.
 # Oh, I bet the width on the far side is bogus.
 # y=705 is the first time it's 100 wide.
