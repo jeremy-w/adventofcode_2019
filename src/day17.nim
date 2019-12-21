@@ -43,3 +43,16 @@ func findIntersections(s: string): seq[tuple[c, r: int]] =
 let intersections = findIntersections(s)
 echo "intersections: ", intersections.join("\p")
 echo "sum of alignment params: ", intersections.sumOfAlignmentParams
+
+echo "== Part 2 =="
+#[
+set 0 to 2
+feed:
+  - movement routine: comma-separated A,B,C then newline. max 20 chars before newline.
+  - A, then B, then C. L,R,digits,newline. max 20 chars before newline.
+  - continuous video on/off: y or n then newline.
+
+Once it finishes the programmed set of movements, assuming it hasn't drifted off into space, the cleaning robot will return to its docking station and report the amount of space dust it collected as a large, non-ASCII value in a single output instruction.
+
+After visiting every part of the scaffold at least once, how much dust does the vacuum robot report it has collected?
+]#
