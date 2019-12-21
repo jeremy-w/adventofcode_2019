@@ -71,28 +71,43 @@ proc scan(point: Point): Int =
   machine.run
   return theAnswer
 
-proc scanRow(y: int): Slice[Int] =
+proc scanRow(y: int, verbose = false): Slice[Int] =
   var x = 0.Int
   var firstX = -1.Int
   var lastX = -1.Int
   while scan((x: x, y: y.Int)) == 0:
+    if verbose: stdout.write('.')
     inc x
   firstX = x
   while scan((x: x, y: y.Int)) == 1:
+    if verbose: stdout.write('#')
     lastX = x
     inc x
+  if verbose: stdout.write("\p")
   return firstX..lastX
 
 assert scanRow(11) == 7.Int .. 7.Int
 assert scanRow(12) == 7.Int .. 8.Int
 
+proc isCovered(ul: Point, br: Point): bool =
+  result = true
+  for x in ul.x .. br.x:
+    for y in ul.y .. br.y:
+      if scan((x, y)) == 0:
+        return false
+
+proc isCovered(ul: Point): bool =
+  isCovered(ul, (ul.x + 99, ul.y + 99))
+
 var y = 705
-#[
-while scanRow(y).len < 100:
+while true:
+  echo &"row {y}"
+  let covered = scanRow(y, true)
+  let pt = (covered.a, y.Int)
+  if isCovered(pt):
+    echo "bingo! ", pt
+    break
   inc y
-echo "first row of width 100 is: ", y
-echo "it covers: ", scanRow(y)
-]#
 # first row of width 100 is: 705
 # it covers: 393 .. 492
 
@@ -118,13 +133,21 @@ proc scanCol(p: Point): Slice[Int] =
 
 assert scanCol((x: 4.Int, y: 6.Int)) == 6.Int .. 7.Int
 
-for x in 393.Int .. 492.Int:
-  let p = (x: x, y: y.Int)
-  let covered = scanCol(p)
-  echo &"{p} covers {covered.len}: {covered}"
+# for x in 393.Int .. 492.Int:
+#   let p = (x: x, y: y.Int)
+#   let covered = scanCol(p)
+#   echo &"{p} covers {covered.len}: {covered}"
 # (x: 393, y: 705) covers 143: 563 .. 705
 
 let hit = (x: 393.Int, y: 705.Int)
 echo &"hit: {hit}, answer: {hit.x * 10000 + hit.y}"
 # That's not the right answer; your answer 3930705 is too low.
 # Oh, I bet the width on the far side is bogus.
+# y=705 is the first time it's 100 wide.
+# It may not be 100 wide for 100 rows, and the >100-height region may not cover a square.
+
+# var p = hit
+# while not isCovered(p):
+#   inc p.x
+#   inc p.y
+# echo "first solid hit:", p
