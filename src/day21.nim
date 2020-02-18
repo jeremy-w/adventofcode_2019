@@ -122,6 +122,8 @@ This fails after 2 jumps. It jumps to the X, then falls in.
 ]#
 let p2try2 = part1Solution.replaceWord("WALK", "RUN")
 
+# fails on 2.-1#-2.-2#-1.
+# #..#@.##.#
 let p2try3 = """
 OR B J
 OR C J
